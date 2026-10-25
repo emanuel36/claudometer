@@ -2,3 +2,110 @@
 .cm-panel-graphic {
     margin: 0 4px;
 }
+
+/* Standard look, shared by every tab */
+.cm-hdr {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #a0a0a0;
+}
+
+.cm-name {
+    font-size: 12px;
+    color: #e6e6e6;
+}
+
+.cm-val {
+    font-size: 12px;
+    font-weight: bold;
+    color: #ffffff;
+    font-feature-settings: "tnum";
+}
+
+.cm-sec {
+    font-size: 12px;
+    color: #a0a0a0;
+    font-feature-settings: "tnum";
+}
+
+.cm-trow {
+    padding: 10px 0;
+    spacing: 8px;
+}
+
+.cm-tline {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.10);
+}
+
+.cm-meter-track {
+    width: 56px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.10);
+}
+
+.cm-meter-fill {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #d97757;
+}
+
+/* Centered block shown when a tab has nothing to show */
+.cm-state {
+    width: 228px;
+    min-height: 140px;
+    padding: 0 8px;
+}
+
+.cm-state-icon {
+    color: #a0a0a0;
+    margin-bottom: 8px;
+}
+
+.cm-state-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.cm-state-line {
+    font-size: 12px;
+    color: #a0a0a0;
+    text-align: center;
+    margin-top: 3px;
+}
+
+/* Footer: status and settings */
+.cm-foot {
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    margin-top: 8px;
+    padding-top: 6px;
+    spacing: 8px;
+}
+
+.cm-foot-status {
+    spacing: 6px;
+}
+
+.cm-foot-icon {
+    color: #a0a0a0;
+}
+
+.cm-foot-text {
+    font-size: 11px;
+    color: #a0a0a0;
+}
+
+.cm-foot-button {
+    padding: 4px;
+    border-radius: 6px;
+    color: #a8a8a8;
+}
+
+.cm-foot-button:hover,
+.cm-foot-button:focus {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.08);
+}
