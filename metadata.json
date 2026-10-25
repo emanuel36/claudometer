@@ -1,0 +1,9 @@
+{
+  "name": "Claudometer",
+  "description": "Your Claude Code plan limits in the top bar, and how you use Claude Code over time: per day, per project and per model.\n\nIt reads the Claude Code login and history on this computer. The login is only sent to api.anthropic.com to read your limits, and nothing else leaves the computer. Not affiliated with or endorsed by Anthropic.",
+  "uuid": "claudometer@emanuel36",
+  "version-name": "1.0",
+  "shell-version": ["46"],
+  "url": "https://github.com/emanuel36/claudometer",
+  "settings-schema": "org.gnome.shell.extensions.claudometer"
+}

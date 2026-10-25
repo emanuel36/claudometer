@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.claudometer"
+          path="/org/gnome/shell/extensions/claudometer/">
+    <key name="refresh-interval" type="i">
+      <range min="60" max="3600"/>
+      <default>300</default>
+      <summary>Seconds between refreshes of the usage limits</summary>
+    </key>
+    <key name="show-icon" type="b">
+      <default>true</default>
+      <summary>Show the icon in the top bar</summary>
+    </key>
+    <key name="last-tab" type="s">
+      <choices>
+        <choice value="Limits"/>
+        <choice value="Activity"/>
+        <choice value="Projects"/>
+        <choice value="Models"/>
+      </choices>
+      <default>'Limits'</default>
+      <summary>The popup tab used last</summary>
+    </key>
+    <key name="panel-style" type="s">
+      <choices>
+        <choice value="percentage"/>
+        <choice value="bar"/>
+        <choice value="ring"/>
+      </choices>
+      <default>'percentage'</default>
+      <summary>How the usage is drawn in the top bar</summary>
+    </key>
+    <key name="panel-limit" type="s">
+      <choices>
+        <choice value="five-hour"/>
+        <choice value="weekly"/>
+        <choice value="both"/>
+      </choices>
+      <default>'five-hour'</default>
+      <summary>Which limit is shown in the top bar</summary>
+    </key>
+    <key name="panel-color" type="s">
+      <choices>
+        <choice value="white"/>
+        <choice value="orange"/>
+        <choice value="usage"/>
+      </choices>
+      <default>'usage'</default>
+      <summary>The color of the top bar usage</summary>
+    </key>
+    <key name="color-scale" type="s">
+      <choices>
+        <choice value="orange"/>
+        <choice value="white-red"/>
+        <choice value="blue-red"/>
+      </choices>
+      <default>'orange'</default>
+      <summary>The color scale used for usage levels</summary>
+    </key>
+    <key name="panel-position" type="s">
+      <choices>
+        <choice value="left"/>
+        <choice value="center"/>
+        <choice value="right"/>
+      </choices>
+      <default>'center'</default>
+      <summary>Where the indicator sits in the top bar</summary>
+    </key>
+    <key name="tabs" type="as">
+      <default>['Projects', 'Activity', 'Models']</default>
+      <summary>The popup tabs shown after Limits</summary>
+    </key>
+    <key name="model-limits" type="b">
+      <default>false</default>
+      <summary>Show the limits per model</summary>
+    </key>
+    <key name="reset-style" type="s">
+      <choices>
+        <choice value="countdown"/>
+        <choice value="clock"/>
+      </choices>
+      <default>'countdown'</default>
+      <summary>How the reset time of a limit is shown</summary>
+    </key>
+    <key name="count" type="s">
+      <choices>
+        <choice value="output"/>
+        <choice value="output-input"/>
+        <choice value="all"/>
+      </choices>
+      <default>'output'</default>
+      <summary>The tokens counted in the activity views</summary>
+    </key>
+    <key name="activity-range" type="s">
+      <choices>
+        <choice value="7d"/>
+        <choice value="30d"/>
+        <choice value="6m"/>
+        <choice value="all"/>
+      </choices>
+      <default>'7d'</default>
+      <summary>The period shown in the activity view</summary>
+    </key>
+    <key name="lists-range" type="s">
+      <choices>
+        <choice value="today"/>
+        <choice value="7d"/>
+        <choice value="30d"/>
+        <choice value="all"/>
+      </choices>
+      <default>'7d'</default>
+      <summary>The period shown in the project and model lists</summary>
+    </key>
+    <key name="project-names" type="s">
+      <choices>
+        <choice value="folder"/>
+        <choice value="path"/>
+      </choices>
+      <default>'folder'</default>
+      <summary>How projects are named in the lists</summary>
+    </key>
+    <key name="hidden-projects" type="as">
+      <default>[]</default>
+      <summary>The projects hidden from the lists</summary>
+    </key>
+    <key name="read-activity" type="s">
+      <choices>
+        <choice value="every-5"/>
+        <choice value="every-15"/>
+        <choice value="on-open"/>
+      </choices>
+      <default>'every-5'</default>
+      <summary>How often the Claude Code history is read</summary>
+    </key>
+    <key name="claude-dir" type="s">
+      <default>''</default>
+      <summary>The Claude Code data folder, empty for the default</summary>
+    </key>
+    <key name="keep-days" type="i">
+      <range min="0" max="364635"/>
+      <default>0</default>
+      <summary>Days of history kept, 0 keeps it forever</summary>
+    </key>
+    <key name="keep-amount" type="i">
+      <range min="1" max="999"/>
+      <default>6</default>
+      <summary>Number of units of history kept when not kept forever</summary>
+    </key>
+    <key name="keep-unit" type="s">
+      <choices>
+        <choice value="days"/>
+        <choice value="weeks"/>
+        <choice value="months"/>
+        <choice value="years"/>
+      </choices>
+      <default>'months'</default>
+      <summary>Unit of the amount of history kept</summary>
+    </key>
+    <key name="rebuild-request" type="i">
+      <default>0</default>
+      <summary>Incremented by the preferences to rebuild the index</summary>
+    </key>
+  </schema>
+</schemalist>
