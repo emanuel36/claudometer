@@ -77,6 +77,35 @@
     margin-top: 3px;
 }
 
+/* Limits table */
+.cm-lt-header {
+    padding-bottom: 2px;
+    spacing: 8px;
+}
+
+/* 244px less the meter, the percent, the time and three 8px gaps */
+.cm-lt-name {
+    width: 74px;
+}
+
+.cm-lt-clock .cm-lt-name {
+    width: 52px;
+}
+
+.cm-lt-percent {
+    width: 36px;
+    text-align: right;
+}
+
+.cm-lt-time {
+    width: 54px;
+    text-align: center;
+}
+
+.cm-lt-clock .cm-lt-time {
+    width: 76px;
+}
+
 /* Footer: status and settings */
 .cm-foot {
     border-top: 1px solid rgba(255, 255, 255, 0.10);
