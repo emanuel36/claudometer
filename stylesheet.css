@@ -3,6 +3,11 @@
     margin: 0 4px;
 }
 
+/* Popup */
+.cm-popup {
+    min-width: 244px;
+}
+
 /* Tabs */
 .cm-tabs {
     spacing: 2px;
