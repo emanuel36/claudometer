@@ -1,0 +1,12 @@
+{
+  "name": "@claudometer/core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Claudometer's data layer for Node: Claude Code limits and history, and Cursor usage",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./worker": "./src/worker.js"
+  }
+}

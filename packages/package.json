@@ -1,0 +1,16 @@
+{
+  "name": "claudometer-packages",
+  "private": true,
+  "description": "The Node side of Claudometer: the shared core",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "core"
+  ],
+  "scripts": {
+    "test": "node scripts/gjs-tests.mjs && node --test \"core/test/*.test.js\""
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}
