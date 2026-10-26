@@ -2,6 +2,7 @@ import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import Soup from 'gi://Soup';
 
+import {firstRequestDelayMs, parseCache, serializeCache} from './cache.js';
 import {State, backoffSeconds, isTokenExpired, stateForStatus} from './status.js';
 
 const USAGE_URL = 'https://api.anthropic.com/api/oauth/usage';
@@ -22,11 +23,25 @@ const REQUEST_TIMEOUT_SECONDS = 30;
  * `onChange` gets `{state, detail, data, lastSuccessMs}` after every attempt. `data` is the
  * last good response and is kept while the state is not fresh, so the last values can still be
  * shown.
+ *
+ * What the client knows is saved in the cache file after every request. A new client starts
+ * from it: it shows the saved values at once and keeps the interval and any 429 backoff, so a
+ * screen lock and unlock does not ask the service again.
  */
 export class UsageClient {
-    constructor(credentialsPath, intervalSeconds, userAgent, onChange) {
+    /**
+     * Args:
+     *     credentialsPath: Claude Code's `.credentials.json`.
+     *     cachePath: The cache file, in the extension's data folder.
+     *     intervalSeconds: Seconds between refreshes.
+     *     userAgent: Sent with every request.
+     *     onChange: Called with the snapshot after every attempt.
+     */
+    constructor({credentialsPath, cachePath, intervalSeconds, userAgent, onChange}) {
         this._credentialsPath = credentialsPath;
+        this._cachePath = cachePath;
         this._onChange = onChange;
+        this._cancellable = new Gio.Cancellable();
         this._session = new Soup.Session({
             timeout: REQUEST_TIMEOUT_SECONDS,
             user_agent: userAgent,
@@ -52,11 +67,57 @@ export class UsageClient {
             console.warn('Claudometer: Cannot watch the Claude Code login:', e.message);
         }
 
-        this.setInterval(intervalSeconds);
+        this._intervalSeconds = intervalSeconds;
+        this._loadCache();
+    }
+
+    // The interval timer starts with the first request
+    _loadCache() {
+        Gio.File.new_for_path(this._cachePath).load_contents_async(this._cancellable,
+            (file, result) => {
+                if (this._destroyed)
+                    return;
+                let cache = null;
+                try {
+                    const [, bytes] = file.load_contents_finish(result);
+                    cache = parseCache(new TextDecoder().decode(bytes), this._credentialsPath);
+                } catch {
+                    // Missing or unreadable: start without it
+                }
+                if (cache) {
+                    this._lastRequestMs = cache.lastRequestMs;
+                    this._backoffSeconds = cache.backoffSeconds;
+                    this._backoffUntilMs = cache.backoffUntilMs;
+                    if (cache.data) {
+                        this._snapshot.data = cache.data;
+                        this._snapshot.lastSuccessMs = cache.lastSuccessMs;
+                        this._report(State.FRESH);
+                    }
+                }
+                const delayMs = firstRequestDelayMs(cache, this._intervalSeconds, Date.now());
+                if (delayMs === 0) {
+                    this._start();
+                    return;
+                }
+                this._startId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delayMs, () => {
+                    this._startId = null;
+                    this._start();
+                    return GLib.SOURCE_REMOVE;
+                });
+            });
+    }
+
+    _start() {
+        this._started = true;
+        this.setInterval(this._intervalSeconds);
         this.refresh();
     }
 
     setInterval(seconds) {
+        this._intervalSeconds = seconds;
+        // Before the first request, the new interval waits for it
+        if (!this._started)
+            return;
         if (this._timerId)
             GLib.source_remove(this._timerId);
         this._timerId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, seconds, () => {
@@ -91,7 +152,11 @@ export class UsageClient {
         });
     }
 
+    // Before the first request, events wait for it: unlocking the screen often changes the
+    // network too
     _refreshSoon() {
+        if (!this._started)
+            return;
         if (this._eventId)
             GLib.source_remove(this._eventId);
         this._eventId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, EVENT_DELAY_SECONDS,
@@ -148,6 +213,41 @@ export class UsageClient {
                 }
                 this._cancelRetry();
                 this._handleResponse(message, bytes, token);
+                this._saveCache();
+            });
+    }
+
+    // Requests that never reach the service change nothing worth saving
+    _saveCache() {
+        const text = serializeCache({
+            credentialsPath: this._credentialsPath,
+            data: this._snapshot.data,
+            lastSuccessMs: this._snapshot.lastSuccessMs,
+            lastRequestMs: this._lastRequestMs,
+            backoffSeconds: this._backoffSeconds,
+            backoffUntilMs: this._backoffUntilMs,
+        });
+        const file = Gio.File.new_for_path(this._cachePath);
+        // The data folder may not exist yet; the index helper also creates it
+        file.get_parent().make_directory_async(GLib.PRIORITY_DEFAULT, this._cancellable,
+            (dir, result) => {
+                try {
+                    dir.make_directory_finish(result);
+                } catch (e) {
+                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
+                        return;
+                }
+                file.replace_contents_bytes_async(new GLib.Bytes(new TextEncoder().encode(text)),
+                    null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, this._cancellable,
+                    (f, res) => {
+                        try {
+                            f.replace_contents_finish(res);
+                        } catch (e) {
+                            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                                console.warn('Claudometer: Cannot save the usage cache:',
+                                    e.message);
+                        }
+                    });
             });
     }
 
@@ -191,13 +291,15 @@ export class UsageClient {
 
     destroy() {
         this._destroyed = true;
-        for (const id of [this._timerId, this._retryId, this._eventId]) {
+        for (const id of [this._timerId, this._retryId, this._eventId, this._startId]) {
             if (id)
                 GLib.source_remove(id);
         }
         this._timerId = null;
         this._retryId = null;
         this._eventId = null;
+        this._startId = null;
+        this._cancellable.cancel();
         this._networkMonitor.disconnect(this._networkId);
         if (this._credentialsId)
             this._credentialsMonitor.disconnect(this._credentialsId);

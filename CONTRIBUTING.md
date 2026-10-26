@@ -23,7 +23,7 @@ GNOME Shell caches extension modules, so every code change needs a shell restart
 | `src/indicator.js` | Top bar button and popup; wires the limits, the history and the tabs |
 | `src/topbar/` | Top bar values, colors and scales (pure), and the bar or ring drawn before the label |
 | `src/popup/` | The tab bar, the Limits, Projects, Activity and Models tabs, and the shared widgets |
-| `src/limits/` | Reading the plan limits: the usage service client, states, backoff and texts |
+| `src/limits/` | Reading the plan limits: the usage service client, its cache, states, backoff and texts |
 | `src/history/` | Claude Code history: transcript parsing, stats, the helper process that indexes the transcripts, reading its summary, CSV export |
 | `src/prefs/` | Preference choices and folders, and the preferences window's rows and previews |
 | `icons/` | The extension icon and the tab icons |
@@ -33,9 +33,9 @@ GNOME Shell caches extension modules, so every code change needs a shell restart
 | `install.sh` | The one-command install from the README: downloads `main`, compiles the schema, enables the extension |
 
 Modules with no GNOME Shell imports (`src/topbar/panel.js`, `src/limits/status.js`,
-`src/limits/limits.js`, `src/history/transcripts.js`, `src/history/stats.js`,
-`src/history/indexer-core.js`, `src/history/export.js`, `src/prefs/config.js`) are pure, so
-they run under plain `gjs` in tests.
+`src/limits/limits.js`, `src/limits/cache.js`, `src/history/transcripts.js`,
+`src/history/stats.js`, `src/history/indexer-core.js`, `src/history/export.js`,
+`src/prefs/config.js`) are pure, so they run under plain `gjs` in tests.
 
 The shell never reads transcripts itself: the helper process does (it can take a minute the
 first time), and the shell only reads the small hourly summary, asynchronously.

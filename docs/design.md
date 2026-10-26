@@ -127,7 +127,9 @@ toggle buttons; on/off options are switches.
 - **Limits:** the usage endpoint Claude Code itself uses, read with Claude Code's login from its
   folder (`CLAUDE_CONFIG_DIR` or `~/.claude`). The login is never renewed here, so Claude Code
   stays signed in. Refreshes back off when the service answers 429, wait while offline, and
-  resume when the network or the login changes.
+  resume when the network or the login changes. The last values, the time of the last request
+  and the backoff are saved after every request, so after a screen lock the values show at once
+  and the next request comes when the interval or the backoff ends.
 - **History:** a helper process reads Claude Code's transcripts incrementally, merges repeated
   messages by id, and writes hourly totals per project and model family. The shell reads only
   that summary, asynchronously. What has been read stays after Claude Code deletes old

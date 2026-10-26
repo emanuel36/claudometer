@@ -37,7 +37,7 @@ class ClaudometerIndicator extends PanelMenu.Button {
      * Args:
      *     path: The extension's folder.
      *     settings: The extension's `Gio.Settings`.
-     *     dataDir: Folder for the transcript index and its summary.
+     *     dataDir: Folder for the transcript index, its summary and the usage cache.
      *     userAgent: Sent with every request to the usage service.
      *     openPreferences: Opens the preferences window.
      */
@@ -50,6 +50,7 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._openPreferences = openPreferences;
         this._indexPath = GLib.build_filenamev([dataDir, 'index.json']);
         this._summaryPath = GLib.build_filenamev([dataDir, 'summary.json']);
+        this._usageCachePath = GLib.build_filenamev([dataDir, 'usage.json']);
         // Hourly totals for the activity tabs; null until there are some
         this._records = null;
         this._cancellable = new Gio.Cancellable();
@@ -126,10 +127,13 @@ class ClaudometerIndicator extends PanelMenu.Button {
     }
 
     _createClient() {
-        this._client = new UsageClient(
-            GLib.build_filenamev([this._claudeDir(), '.credentials.json']),
-            this._settings.get_int('refresh-interval'), this._userAgent,
-            usage => this._onUsage(usage));
+        this._client = new UsageClient({
+            credentialsPath: GLib.build_filenamev([this._claudeDir(), '.credentials.json']),
+            cachePath: this._usageCachePath,
+            intervalSeconds: this._settings.get_int('refresh-interval'),
+            userAgent: this._userAgent,
+            onChange: usage => this._onUsage(usage),
+        });
     }
 
     // The login and the history both come from the new folder
