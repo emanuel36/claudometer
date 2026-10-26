@@ -1,0 +1,319 @@
+/* The GNOME popup's look (docs/design.md), on the editor's own theme colors */
+:root {
+    --cm-accent: #d97757;
+    --cm-dim: var(--vscode-descriptionForeground);
+    --cm-line: var(--vscode-widget-border, rgba(128, 128, 128, 0.25));
+    --cm-track: rgba(128, 128, 128, 0.22);
+}
+
+body {
+    padding: 0 12px 8px;
+    color: var(--vscode-foreground);
+    font-family: var(--vscode-font-family);
+    font-size: 12px;
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+button:focus-visible,
+.project:focus-visible {
+    outline: 1px solid var(--vscode-focusBorder);
+}
+
+svg {
+    fill: currentColor;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--cm-line);
+    margin-bottom: 10px;
+}
+
+.tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 4px 4px;
+    color: var(--cm-dim);
+    border-bottom: 2px solid transparent;
+}
+
+.tab:hover,
+.tab.selected {
+    color: var(--vscode-foreground);
+}
+
+.tab.selected {
+    border-bottom-color: var(--vscode-foreground);
+}
+
+.tab-label {
+    font-size: 10px;
+}
+
+/* Switches such as 7d | 30d | 6m | All */
+.switch {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: var(--cm-track);
+}
+
+.switch-button {
+    flex: 1;
+    padding: 3px 6px;
+    border-radius: 6px;
+    color: var(--cm-dim);
+}
+
+.switch-button.selected {
+    background: var(--vscode-editor-background);
+    color: var(--vscode-foreground);
+}
+
+/* Standard blocks */
+.hdr {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--cm-dim);
+}
+
+.name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.val {
+    font-weight: bold;
+}
+
+.sec {
+    color: var(--cm-dim);
+}
+
+.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.range-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.section {
+    margin: 14px 0 6px;
+}
+
+/* Limits */
+.limits-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 56px 40px 64px;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 0;
+    border-top: 1px solid var(--cm-line);
+}
+
+.limits-row.hdr {
+    padding: 0 0 4px;
+    border-top: none;
+}
+
+.limits.stale .limits-row:not(.fresh):not(.hdr) {
+    opacity: 0.45;
+}
+
+.meter {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--cm-track);
+    overflow: hidden;
+}
+
+.meter-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--cm-accent);
+}
+
+/* Projects and Models */
+.stack {
+    display: flex;
+    gap: 2px;
+    height: 8px;
+    margin: 2px 0 10px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.stack-part {
+    flex-basis: 0;
+    min-width: 2px;
+}
+
+.share-row {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) 40px 48px;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--cm-line);
+}
+
+.share-row.hdr {
+    padding: 0 0 4px;
+    border-top: none;
+}
+
+.share-row.project {
+    cursor: pointer;
+}
+
+.share-row.model {
+    padding: 4px 0;
+    border-top: none;
+    color: var(--cm-dim);
+}
+
+.share-row.model .name {
+    padding-left: 10px;
+}
+
+.share-row.model .val {
+    font-weight: normal;
+}
+
+.square {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.square.none {
+    visibility: hidden;
+}
+
+/* Activity */
+.chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 96px;
+}
+
+.bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column-reverse;
+    height: 100%;
+}
+
+.bar-part:last-child {
+    border-radius: 2px 2px 0 0;
+}
+
+.axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 10px;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin: 8px 0 2px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hours {
+    display: grid;
+    grid-template-columns: repeat(24, 1fr);
+    gap: 2px;
+}
+
+.hour {
+    height: 14px;
+    border-radius: 2px;
+}
+
+/* A tab with nothing to show */
+.state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    color: var(--cm-dim);
+    text-align: center;
+}
+
+.state svg {
+    margin-bottom: 8px;
+}
+
+.state-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--vscode-foreground);
+}
+
+.state-line {
+    margin-top: 3px;
+}
+
+.note {
+    margin-top: 10px;
+}
+
+/* Footer */
+.foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 6px;
+    border-top: 1px solid var(--cm-line);
+}
+
+.foot-text {
+    font-size: 11px;
+    color: var(--cm-dim);
+}
+
+.foot-button {
+    display: flex;
+    padding: 4px;
+    border-radius: 6px;
+    color: var(--cm-dim);
+}
+
+.foot-button:hover {
+    color: var(--vscode-foreground);
+    background: var(--cm-track);
+}

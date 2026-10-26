@@ -1,5 +1,7 @@
 export {exportCsv, EXPORT_FILE_NAME} from '../../../src/history/export.js';
-export {State, limitTimeText} from '../../../src/limits/status.js';
+export {
+    SCREEN_STATES, State, limitTimeText, limitsScreen,
+} from '../../../src/limits/status.js';
 export {rangeStart} from '../../../src/history/stats.js';
 export {SCALES, usageColor} from '../../../src/topbar/panel.js';
 export {REFRESH_CHOICES, indexGapSeconds} from '../../../src/prefs/config.js';
