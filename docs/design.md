@@ -9,6 +9,10 @@ A GNOME Shell extension that answers two questions without leaving the desktop:
 - **How do I use Claude Code over time?** Output per day, per project and per model, built from
   the history Claude Code already keeps on the computer.
 
+The same answers come to VS Code, Cursor and the other VS Code based editors, and to the
+terminal on Windows, macOS and Linux, for people who use Claude Code or Cursor only in a
+terminal or an agent tab (see Editors and Terminal).
+
 ## Principles
 
 - **Calm.** No notifications and no alerts. One accent color, `#d97757`; no color-coded
@@ -17,7 +21,8 @@ A GNOME Shell extension that answers two questions without leaving the desktop:
   states, so the popup reads as one design.
 - **Local first.** The Claude Code login is only sent to `api.anthropic.com` to read the
   limits. The history never leaves the computer, and only token counts, times, models and
-  project folders are read from it, never the conversations.
+  project folders are read from it, never the conversations. Cursor's usage is opt-in, and
+  Cursor's login is only sent to `cursor.com`.
 - **Light on the shell.** No synchronous file IO in the shell process. Reading the history is
   slow the first time, so a helper process does it and the shell only reads a small summary.
   Everything created in `enable()` is destroyed in `disable()`.
@@ -133,9 +138,52 @@ toggle buttons; on/off options are switches.
   that summary, asynchronously. What has been read stays after Claude Code deletes old
   transcripts.
 
+- **Cursor (opt-in):** Cursor's own login, read from its database read-only, reads the plan's
+  usage and the usage events of every model from `cursor.com`. Each event names its
+  conversation, and Cursor's database names the workspace of each conversation, so events land
+  in their exact project; Cursor CLI chats do once a Cursor hook notes their workspace. Models
+  keep their exact names, such as `GPT-5.6 Sol Medium` or `Sonnet 4.5 Thinking`.
+- **Shared by the editors and the terminal:** one data dir per user, where a single cache of the
+  limits, guarded by a lock and 60 seconds between requests, serves every editor window, the
+  CLI and the status line.
+
+## Editors
+
+The extension follows the popup: same tabs, blocks, texts and screen states, on the editor's
+own theme colors, with the accent `#d97757` for meters and the spark.
+
+- **Status bar:** the spark and the usage, `$(sparkle) 42% · 18%`, colored like the top bar
+  along the same scales, faded while outdated, on the left or right. Without Claude Code values
+  it shows the Cursor plan instead, `Cursor 19%`. Hovering shows a table of every limit and the
+  state line; clicking opens the panel.
+- **Panel:** a view in its own activity bar container, the spark. Above the range switch of
+  Projects, Activity and Models, a source switch (`All · Claude Code · Cursor`) shows when
+  Cursor's usage is on.
+- **Limits** adds a `Cursor plan` row, used share of the plan and time to the end of the billing
+  cycle, when Cursor's usage is on.
+- **Projects:** every project row is followed by its models, dim and indented, with their share
+  of the project and their tokens; clicking a project folds them.
+- **Models:** one row per exact model, in its family color (GPT, Grok, Gemini, Composer and Auto
+  in the Other grey).
+- **Settings** are the GNOME ones under `claudometer.*`, plus Cursor's usage on or off. In
+  Cursor, the first start asks once whether to add Cursor's usage.
+
+## Terminal
+
+`claudometer` prints the Limits tab as a table, with a 10-character meter in the accent color;
+`projects`, `models` and `activity` print the other tabs, projects with their models below
+them, and the days as accent bars with the hours as a sparkline. Colors only show on a terminal
+that wants them (no `NO_COLOR`, not `dumb`); `--json` prints the data instead.
+
+Claude Code's status line gets one line, from the cache only, so it never waits on the network:
+`✻ 5h 42% 2h 13m · wk 18% · today 1.2M`, the values in the usage colors, faded while outdated,
+and today's tokens of the project Claude Code is in.
+
 ## Mockups
 
 `docs/images/` holds one mockup per tab, drawn with made-up data, and `overview.svg`, the
 README image: the four tabs in two columns that end together on a desktop background, the
 shorter column topped by a magnified piece of the top bar with the indicator in its default
 look. It is built from the tab mockups, so it is rebuilt whenever one of them changes.
+`vscode.svg` shows the status bar, its tooltip and the panel in an editor, also with made-up
+data.
