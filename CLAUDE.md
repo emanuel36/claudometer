@@ -1,8 +1,8 @@
 # Claudometer
 
-GNOME Shell extension (GNOME 46, X11 here). Developer notes are in CONTRIBUTING.md: layout,
-tests, logs and packaging. The README is for users: no internals, and no code beyond the
-install commands.
+GNOME Shell extension (GNOME 46 to 51; this machine runs 46 on X11). Developer notes are in
+CONTRIBUTING.md: layout, tests, logs and packaging. The README is for users: no internals, and
+no code beyond the install commands.
 
 - The installed copy is a symlink to this repo
   (`~/.local/share/gnome-shell/extensions/claudometer@emanuel36`), so the checked-out branch is

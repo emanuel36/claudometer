@@ -19,7 +19,7 @@ import {UsageClient} from './limits/usage-client.js';
 import {
     createActivityView, createModelsView, createProjectsView, createTabBar,
 } from './popup/views.js';
-import {createFooter} from './popup/widgets.js';
+import {createFooter, createVBox} from './popup/widgets.js';
 
 const STALE_OPACITY = 115;
 const PANEL_KEYS = ['panel-style', 'panel-limit', 'panel-color', 'color-scale', 'show-icon'];
@@ -179,7 +179,7 @@ class ClaudometerIndicator extends PanelMenu.Button {
         });
         this._showStatus();
 
-        const body = new St.BoxLayout({style_class: 'cm-popup', vertical: true, x_expand: true});
+        const body = createVBox({style_class: 'cm-popup', x_expand: true});
         body.add_child(this._tabBar.actor);
         for (const view of Object.values(this._tabViews))
             body.add_child(view);

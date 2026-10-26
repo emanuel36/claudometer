@@ -21,7 +21,7 @@ A GNOME Shell extension that answers two questions without leaving the desktop:
 - **Light on the shell.** No synchronous file IO in the shell process. Reading the history is
   slow the first time, so a helper process does it and the shell only reads a small summary.
   Everything created in `enable()` is destroyed in `disable()`.
-- **Targets GNOME Shell 46**, GJS with ES modules, libadwaita 1.5 for the preferences.
+- **Targets GNOME Shell 46 to 51**, GJS with ES modules, libadwaita 1.5 for the preferences.
 
 ## Top bar
 

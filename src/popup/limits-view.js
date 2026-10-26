@@ -4,7 +4,7 @@ import St from 'gi://St';
 
 import {scopedLimits} from '../limits/limits.js';
 import {limitTimeText} from '../limits/status.js';
-import {createStateBlock} from './widgets.js';
+import {createStateBlock, createVBox} from './widgets.js';
 
 const METER_WIDTH = 56;
 // Shown faded while the limits could not be refreshed
@@ -31,8 +31,8 @@ function cell(text, styleClass, extra = {}) {
  *     null; `setOptions` redraws with the last data.
  */
 export function createLimitsView() {
-    const actor = new St.BoxLayout({vertical: true, x_expand: true, y_expand: true});
-    const table = new St.BoxLayout({vertical: true, x_expand: true});
+    const actor = createVBox({x_expand: true, y_expand: true});
+    const table = createVBox({x_expand: true});
     const stateBlock = createStateBlock();
     actor.add_child(table);
     actor.add_child(stateBlock.actor);
