@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600" height="420" viewBox="0 0 600 420" font-family="'Segoe UI', Ubuntu, Cantarell, 'Noto Sans', sans-serif">
+<defs>
+<symbol id="spark" viewBox="0 0 16 16"><g stroke="currentColor" stroke-width="1.55" stroke-linecap="round"><line x1="8" y1="8" x2="15.40" y2="8.00"/><line x1="8" y1="8" x2="12.64" y2="11.13"/><line x1="8" y1="8" x2="10.58" y2="14.40"/><line x1="8" y1="8" x2="8.00" y2="13.20"/><line x1="8" y1="8" x2="3.97" y2="13.97"/><line x1="8" y1="8" x2="2.34" y2="10.29"/><line x1="8" y1="8" x2="3.00" y2="8.00"/><line x1="8" y1="8" x2="2.20" y2="4.09"/><line x1="8" y1="8" x2="5.83" y2="2.62"/><line x1="8" y1="8" x2="8.00" y2="1.40"/><line x1="8" y1="8" x2="10.96" y2="3.61"/><line x1="8" y1="8" x2="14.77" y2="5.27"/></g></symbol>
+<clipPath id="window"><rect width="600" height="420" rx="10"/></clipPath>
+<clipPath id="stack"><rect x="56" y="176" width="236" height="8" rx="4"/></clipPath>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-opacity="0.5"/></filter>
+</defs>
+<g clip-path="url(#window)">
+<rect width="600" height="420" fill="#1f1f1f"/>
+<!-- Title bar -->
+<rect width="600" height="28" fill="#181818"/>
+<text x="300" y="18" font-size="11" fill="#9d9d9d" text-anchor="middle">server.ts &#8212; web-shop</text>
+<rect y="28" width="600" height="1" fill="#2b2b2b"/>
+<!-- Activity bar -->
+<rect y="29" width="44" height="369" fill="#181818"/>
+<g fill="none" stroke="#868686" stroke-width="1.4" stroke-linejoin="round"><path d="M15 40h9l5 5v13H15z"/><path d="M24 40v5h5"/><circle cx="21" cy="81" r="5"/><path d="M25 85l4.5 4.5" stroke-linecap="round"/></g>
+<rect y="112" width="2" height="32" fill="#e6e6e6"/>
+<use href="#spark" xlink:href="#spark" x="12" y="118" width="20" height="20" color="#e6e6e6"/>
+<rect x="44" y="29" width="1" height="369" fill="#2b2b2b"/>
+<!-- Side bar: the Claudometer panel -->
+<rect x="45" y="29" width="259" height="369" fill="#181818"/>
+<text x="56" y="46" font-size="11" fill="#cccccc" letter-spacing="0.5">CLAUDOMETER</text>
+<g transform="translate(77.5 58)" fill="#9d9d9d"><path d="M1.5 11a6.5 6.5 0 0 1 13 0h-2a4.5 4.5 0 0 0-9 0z"/><rect x="7.4" y="5.6" width="1.2" height="6" rx="0.6" transform="rotate(40 8 11)"/><circle cx="8" cy="11" r="1.4"/></g><text x="85.5" y="88" font-size="10" fill="#9d9d9d" text-anchor="middle">Limits</text>
+<g transform="translate(136.5 58)" fill="#e6e6e6"><path d="M2.5 3h3.8l1.6 1.6h5.6a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></g><text x="144.5" y="88" font-size="10" fill="#e6e6e6" text-anchor="middle">Projects</text>
+<g transform="translate(195.5 58)" fill="#9d9d9d"><rect x="2" y="8" width="3" height="6" rx="1"/><rect x="6.5" y="3" width="3" height="11" rx="1"/><rect x="11" y="6" width="3" height="8" rx="1"/></g><text x="203.5" y="88" font-size="10" fill="#9d9d9d" text-anchor="middle">Activity</text>
+<g transform="translate(254.5 58)" fill="#9d9d9d"><path fill-rule="evenodd" d="M4.5 3.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM6 6v4h4V6z"/><rect x="5.5" y="1" width="1.2" height="2"/><rect x="9.3" y="1" width="1.2" height="2"/><rect x="5.5" y="13" width="1.2" height="2"/><rect x="9.3" y="13" width="1.2" height="2"/><rect x="1" y="5.5" width="2" height="1.2"/><rect x="1" y="9.3" width="2" height="1.2"/><rect x="13" y="5.5" width="2" height="1.2"/><rect x="13" y="9.3" width="2" height="1.2"/></g><text x="262.5" y="88" font-size="10" fill="#9d9d9d" text-anchor="middle">Models</text>
+<rect x="56" y="96" width="236" height="1" fill="#2b2b2b"/>
+<rect x="115" y="94" width="59" height="2" fill="#e6e6e6"/>
+<rect x="56" y="104" width="236" height="22" rx="8" fill="rgba(128,128,128,0.22)"/>
+<rect x="58" y="106" width="77" height="18" rx="6" fill="#1f1f1f"/>
+<text x="96.5" y="119" font-size="11" fill="#e6e6e6" text-anchor="middle">All</text>
+<text x="174" y="119" font-size="11" fill="#9d9d9d" text-anchor="middle">Claude Code</text>
+<text x="251.5" y="119" font-size="11" fill="#9d9d9d" text-anchor="middle">Cursor</text>
+<rect x="56" y="132" width="236" height="22" rx="8" fill="rgba(128,128,128,0.22)"/>
+<rect x="116" y="134" width="58" height="18" rx="6" fill="#1f1f1f"/>
+<text x="87" y="147" font-size="11" fill="#9d9d9d" text-anchor="middle">Today</text>
+<text x="145" y="147" font-size="11" fill="#e6e6e6" text-anchor="middle">7d</text>
+<text x="203" y="147" font-size="11" fill="#9d9d9d" text-anchor="middle">30d</text>
+<text x="261" y="147" font-size="11" fill="#9d9d9d" text-anchor="middle">All</text>
+<text x="56" y="170" font-size="9" font-weight="600" fill="#9d9d9d" letter-spacing="1">LAST 7 DAYS</text>
+<text x="292" y="170" font-size="9" font-weight="600" fill="#9d9d9d" letter-spacing="1" text-anchor="end">2.1M</text>
+<g clip-path="url(#stack)">
+<rect x="56" y="176" width="93.5" height="8" fill="#d97757"/>
+<rect x="151.5" y="176" width="61.6" height="8" fill="#e59a80"/>
+<rect x="215.1" y="176" width="27.4" height="8" fill="#f0bea9"/>
+<rect x="244.5" y="176" width="20.5" height="8" fill="#9a9a9a"/>
+<rect x="267" y="176" width="25" height="8" fill="#4a4a4a"/>
+</g>
+<text x="74" y="200" font-size="9" font-weight="600" fill="#9d9d9d" letter-spacing="1">PROJECT</text>
+<text x="236" y="200" font-size="9" font-weight="600" fill="#9d9d9d" letter-spacing="1" text-anchor="end">SHARE</text>
+<text x="292" y="200" font-size="9" font-weight="600" fill="#9d9d9d" letter-spacing="1" text-anchor="end">TOKENS</text>
+<g font-size="12" style="font-feature-settings:'tnum'">
+<rect x="56" y="206" width="236" height="1" fill="#2b2b2b"/>
+<rect x="56" y="214" width="10" height="10" rx="2" fill="#d97757"/>
+<text x="74" y="223" fill="#e6e6e6">web-shop</text><text x="236" y="223" fill="#9d9d9d" text-anchor="end">41%</text><text x="292" y="223" fill="#ffffff" font-weight="700" text-anchor="end">862K</text>
+<text x="84" y="241" fill="#9d9d9d">Opus 4.5</text><text x="236" y="241" fill="#9d9d9d" text-anchor="end">62%</text><text x="292" y="241" fill="#9d9d9d" text-anchor="end">534K</text>
+<text x="84" y="257" fill="#9d9d9d">Sonnet 4.5</text><text x="236" y="257" fill="#9d9d9d" text-anchor="end">38%</text><text x="292" y="257" fill="#9d9d9d" text-anchor="end">328K</text>
+<rect x="56" y="266" width="236" height="1" fill="#2b2b2b"/>
+<rect x="56" y="274" width="10" height="10" rx="2" fill="#e59a80"/>
+<text x="74" y="283" fill="#e6e6e6">api-gateway</text><text x="236" y="283" fill="#9d9d9d" text-anchor="end">27%</text><text x="292" y="283" fill="#ffffff" font-weight="700" text-anchor="end">567K</text>
+<text x="84" y="301" fill="#9d9d9d">Sonnet 4.5</text><text x="236" y="301" fill="#9d9d9d" text-anchor="end">70%</text><text x="292" y="301" fill="#9d9d9d" text-anchor="end">397K</text>
+<text x="84" y="317" fill="#9d9d9d">GPT-5 Codex</text><text x="236" y="317" fill="#9d9d9d" text-anchor="end">30%</text><text x="292" y="317" fill="#9d9d9d" text-anchor="end">170K</text>
+<rect x="56" y="326" width="236" height="1" fill="#2b2b2b"/>
+<rect x="56" y="334" width="10" height="10" rx="2" fill="#f0bea9"/>
+<text x="74" y="343" fill="#e6e6e6">dotfiles</text><text x="236" y="343" fill="#9d9d9d" text-anchor="end">12%</text><text x="292" y="343" fill="#ffffff" font-weight="700" text-anchor="end">252K</text>
+<text x="84" y="361" fill="#9d9d9d">Haiku 4.5</text><text x="236" y="361" fill="#9d9d9d" text-anchor="end">100%</text><text x="292" y="361" fill="#9d9d9d" text-anchor="end">252K</text>
+<rect x="56" y="370" width="236" height="1" fill="#2b2b2b"/>
+<rect x="56" y="378" width="10" height="10" rx="2" fill="#9a9a9a"/>
+<text x="74" y="387" fill="#e6e6e6">blog</text><text x="236" y="387" fill="#9d9d9d" text-anchor="end">9%</text><text x="292" y="387" fill="#ffffff" font-weight="700" text-anchor="end">189K</text>
+</g>
+<rect x="304" y="29" width="1" height="369" fill="#2b2b2b"/>
+<!-- Editor -->
+<rect x="305" y="29" width="295" height="27" fill="#181818"/>
+<rect x="305" y="29" width="100" height="27" fill="#1f1f1f"/>
+<text x="320" y="47" font-size="11" fill="#cccccc">server.ts</text>
+<g opacity="0.55">
+<rect x="320" y="70" width="40" height="6" rx="3" fill="#569cd6"/><rect x="364" y="70" width="70" height="6" rx="3" fill="#9cdcfe"/><rect x="438" y="70" width="60" height="6" rx="3" fill="#ce9178"/>
+<rect x="320" y="88" width="40" height="6" rx="3" fill="#569cd6"/><rect x="364" y="88" width="50" height="6" rx="3" fill="#9cdcfe"/><rect x="418" y="88" width="80" height="6" rx="3" fill="#ce9178"/>
+<rect x="320" y="124" width="150" height="6" rx="3" fill="#6a9955"/>
+<rect x="320" y="142" width="54" height="6" rx="3" fill="#569cd6"/><rect x="378" y="142" width="90" height="6" rx="3" fill="#dcdcaa"/>
+<rect x="336" y="160" width="36" height="6" rx="3" fill="#569cd6"/><rect x="376" y="160" width="120" height="6" rx="3" fill="#d4d4d4"/>
+<rect x="336" y="178" width="20" height="6" rx="3" fill="#c586c0"/><rect x="360" y="178" width="100" height="6" rx="3" fill="#9cdcfe"/>
+<rect x="352" y="196" width="46" height="6" rx="3" fill="#c586c0"/><rect x="402" y="196" width="140" height="6" rx="3" fill="#d4d4d4"/>
+<rect x="336" y="214" width="12" height="6" rx="3" fill="#d4d4d4"/>
+<rect x="336" y="232" width="46" height="6" rx="3" fill="#c586c0"/><rect x="386" y="232" width="84" height="6" rx="3" fill="#d4d4d4"/>
+<rect x="320" y="250" width="12" height="6" rx="3" fill="#d4d4d4"/>
+</g>
+<!-- Status bar -->
+<rect y="398" width="600" height="22" fill="#181818"/>
+<rect y="398" width="600" height="1" fill="#2b2b2b"/>
+<g fill="none" stroke="#cccccc" stroke-width="1.2"><circle cx="15" cy="405" r="1.8"/><circle cx="15" cy="414" r="1.8"/><circle cx="22" cy="407" r="1.8"/><path d="M15 406.8v5.4M22 408.8c0 3-7 2-7 3.4"/></g>
+<text x="30" y="413" font-size="11" fill="#cccccc">main</text>
+<rect x="482" y="399" width="84" height="21" fill="rgba(255,255,255,0.12)"/>
+<use href="#spark" xlink:href="#spark" x="490" y="403" width="13" height="13" color="#de8668"/>
+<text x="507" y="413" font-size="11" fill="#de8668">42% &#183; 18%</text>
+<text x="574" y="413" font-size="11" fill="#cccccc">LF</text>
+<!-- The status bar item's tooltip -->
+<g filter="url(#shadow)"><rect x="392" y="276" width="200" height="116" rx="4" fill="#252526" stroke="#454545"/></g>
+<text x="404" y="296" font-size="12" font-weight="700" fill="#e6e6e6">Claudometer</text>
+<g font-size="11" style="font-feature-settings:'tnum'">
+<text x="404" y="316" font-weight="600" fill="#cccccc">Limit</text><text x="530" y="316" font-weight="600" fill="#cccccc" text-anchor="end">Used</text><text x="580" y="316" font-weight="600" fill="#cccccc" text-anchor="end">Left</text>
+<rect x="404" y="322" width="176" height="1" fill="#454545"/>
+<text x="404" y="338" fill="#cccccc">5-hour</text><text x="530" y="338" fill="#cccccc" text-anchor="end">42%</text><text x="580" y="338" fill="#cccccc" text-anchor="end">2h 14m</text>
+<text x="404" y="354" fill="#cccccc">Weekly</text><text x="530" y="354" fill="#cccccc" text-anchor="end">18%</text><text x="580" y="354" fill="#cccccc" text-anchor="end">3d 5h</text>
+<text x="404" y="370" fill="#cccccc">Cursor plan</text><text x="530" y="370" fill="#cccccc" text-anchor="end">23%</text><text x="580" y="370" fill="#cccccc" text-anchor="end">12d 4h</text>
+<text x="404" y="386" fill="#9d9d9d">Updated 2 min ago</text>
+</g>
+</g>
+</svg>
