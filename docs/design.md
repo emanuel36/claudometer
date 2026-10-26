@@ -42,8 +42,8 @@ The indicator is an optional icon followed by the usage.
 - The text uses the top bar's own font, like the clock. While values are outdated, the indicator
   fades; before the first value it shows `…`.
 
-The icon is a spark: 12 rounded strokes of uneven length radiating from the center, in the
-accent color.
+The icon is a gauge: a dial open at the bottom, with a needle past the middle and a dot at
+its pivot, in the accent color. It is original art, not Anthropic's logo.
 
 ## Popup
 
