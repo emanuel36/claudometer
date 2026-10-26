@@ -28,6 +28,7 @@ GNOME Shell caches extension modules, so every code change needs a shell restart
 | `icons/` | The extension icon and the tab icons |
 | `tests/` | Tests for the pure modules |
 | `docs/` | The design and the README mockups |
+| `install.sh` | The one-command install from the README: downloads `main`, compiles the schema, enables the extension |
 
 Modules with no GNOME Shell imports (`src/topbar/panel.js`, `src/limits/status.js`,
 `src/limits/limits.js`, `src/history/transcripts.js`, `src/history/stats.js`,
@@ -44,6 +45,14 @@ bash tests/run.sh
 ```
 
 It prints one line per test file, and the failing checks of the first file that fails.
+
+## README image
+
+`docs/images/overview.svg` is built from the four tab mockups; rebuild it after changing one:
+
+```bash
+gjs -m docs/images/overview.js
+```
 
 ## Logs
 
