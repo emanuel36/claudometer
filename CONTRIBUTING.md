@@ -27,7 +27,7 @@ GNOME Shell caches extension modules, so every code change needs a shell restart
 | `src/history/` | Claude Code history: transcript parsing, stats, the helper process that indexes the transcripts, reading its summary, CSV export |
 | `src/prefs/` | Preference choices and folders, and the preferences window's rows and previews |
 | `icons/` | The extension icon and the tab icons |
-| `tests/` | Tests for the pure modules |
+| `tests/` | Tests for the pure modules; `tests/shell/` loads the extension in each GNOME version |
 | `package.json`, `eslint.config.js`, `.github/` | The linter and the CI workflow; not part of the extension |
 | `docs/` | The design and the README mockups |
 | `install.sh` | The one-command install from the README: downloads `main`, compiles the schema, enables the extension |
@@ -47,6 +47,20 @@ bash tests/run.sh
 ```
 
 It prints one line per test file, and the failing checks of the first file that fails.
+
+## GNOME versions
+
+```bash
+bash tests/shell/run.sh          # every version in metadata.json
+bash tests/shell/run.sh 50 51    # only some
+```
+
+For each GNOME version, it starts a headless GNOME Shell in a Fedora container (Docker is
+needed) and loads the packed extension. It opens the popup on every tab, disables and enables
+the extension as a screen lock does, and opens the preferences. It fails on any error either one
+logs. The extension reads a fake login, so it sends one request that the usage service rejects.
+Add a version to `metadata.json` only after it passes; a new one also needs its Fedora release
+in `tests/shell/run.sh`.
 
 ## Lint
 
