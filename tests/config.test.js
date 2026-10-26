@@ -25,6 +25,8 @@ check('setting wins', resolveClaudeDir('/data/c', '/opt/claude', '/home/u'), '/d
 check('tilde expands',
     resolveClaudeDir('~/work/.claude/', null, '/home/u'), '/home/u/work/.claude');
 check('bare tilde', resolveClaudeDir('~', null, '/home/u'), '/home/u');
+check('windows tilde',
+    resolveClaudeDir('~\\work\\.claude\\', null, 'C:\\Users\\u'), 'C:\\Users\\u\\work\\.claude');
 check('gap 5 min', indexGapSeconds('every-5'), 300);
 check('gap 15 min', indexGapSeconds('every-15'), 900);
 check('gap on open', indexGapSeconds('on-open'), 0);

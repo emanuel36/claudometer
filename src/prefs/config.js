@@ -18,13 +18,13 @@ const INDEX_GAPS = {'every-5': 300, 'every-15': 900, 'on-open': 0};
  *
  * Returns:
  *     The setting, else the environment folder, else `<home>/.claude`; a leading `~` becomes
- *     the home directory and trailing slashes are dropped.
+ *     the home directory and trailing slashes or backslashes are dropped.
  */
 export function resolveClaudeDir(value, envDir, home) {
     let dir = value.trim() || (envDir ?? '').trim() || `${home}/.claude`;
-    if (dir === '~' || dir.startsWith('~/'))
+    if (dir === '~' || dir.startsWith('~/') || dir.startsWith('~\\'))
         dir = home + dir.slice(1);
-    return dir.replace(/\/+$/, '') || '/';
+    return dir.replace(/[\\/]+$/, '') || '/';
 }
 
 /**

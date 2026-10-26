@@ -13,6 +13,36 @@ export function modelFamily(modelId) {
     return NAMED_FAMILIES.find(family => modelId.includes(family)) ?? 'other';
 }
 
+const MODEL_WORDS = {gpt: 'GPT', xhigh: 'XHigh', default: 'Auto'};
+
+/**
+ * Readable name for a model id, from Claude Code or Cursor.
+ *
+ * Returns:
+ *     `claude-opus-5-5` gives "Opus 5.5", `claude-haiku-4-5-20251001` "Haiku 4.5",
+ *     `claude-4.5-sonnet-thinking` "Sonnet 4.5 Thinking", `gpt-5.6` "GPT-5.6" and
+ *     `grok-4.7-xhigh` "Grok 4.7 XHigh"; a family name such as `opus` gives "Opus".
+ */
+export function modelLabel(modelId) {
+    const parts = [];
+    for (const part of modelId.toLowerCase().replace(/^claude-/, '').replace(/-\d{8}$/, '')
+        .split('-').filter(Boolean)) {
+        const last = parts[parts.length - 1];
+        if (/^\d+$/.test(part) && /^\d+(\.\d+)*$/.test(last ?? ''))
+            parts[parts.length - 1] = `${last}.${part}`;
+        else
+            parts.push(part);
+    }
+    if (parts.length === 0)
+        return modelId;
+    if (parts.length > 1 && /^\d/.test(parts[0]) && NAMED_FAMILIES.includes(parts[1]))
+        parts.splice(0, 2, parts[1], parts[0]);
+    const words = parts.map(word => MODEL_WORDS[word] ?? word[0].toUpperCase() + word.slice(1));
+    if (parts[0] === 'gpt' && /^\d/.test(parts[1] ?? ''))
+        words.splice(0, 2, `GPT-${parts[1]}`);
+    return words.join(' ');
+}
+
 /**
  * Args:
  *     nowMs: Current time.
@@ -113,16 +143,20 @@ export function periodStats(records, range, nowMs) {
  * the record shape, so every function here takes it in place of the records, with far fewer
  * entries; `model` holds the family and `branch` is empty.
  *
+ * Args:
+ *     records: Records from transcripts.js.
+ *     options: `keepModel` sums per model id instead of per family.
+ *
  * Returns:
  *     The buckets, in no particular order.
  */
-export function bucketRecords(records) {
+export function bucketRecords(records, {keepModel = false} = {}) {
     const buckets = new Map();
     for (const record of records) {
         const date = new Date(record.t);
         const t = new Date(date.getFullYear(), date.getMonth(), date.getDate(),
             date.getHours()).getTime();
-        const model = modelFamily(record.model);
+        const model = keepModel ? record.model : modelFamily(record.model);
         const id = `${t}|${record.cwd}|${model}|${record.sidechain}`;
         const bucket = buckets.get(id) ?? {id, t, model, out: 0, input: 0, cacheRead: 0,
             cacheWrite: 0, cwd: record.cwd, branch: '', sidechain: record.sidechain};
@@ -159,12 +193,58 @@ export function modelTotals(records, fromMs, toMs) {
     return totals.other ? [...named, {family: 'other', out: totals.other}] : named;
 }
 
+/**
+ * Returns:
+ *     `[{model, label, out}]` per model id, largest first. With records bucketed per family
+ *     the ids are the families.
+ */
+export function modelIdTotals(records, fromMs, toMs) {
+    const totals = new Map();
+    for (const record of inRange(records, fromMs, toMs))
+        totals.set(record.model, (totals.get(record.model) ?? 0) + record.out);
+    return [...totals].map(([model, out]) => ({model, label: modelLabel(model), out}))
+        .sort((a, b) => b.out - a.out);
+}
+
+// Folders come from Linux, macOS and Windows, so both separators split them
+const SEPARATORS = /[\\/]/;
+
 function lastComponent(path) {
-    return path.split('/').filter(Boolean).pop() ?? path;
+    return path.split(SEPARATORS).filter(Boolean).pop() ?? path;
 }
 
 function parentComponent(path) {
-    return lastComponent(path.split('/').slice(0, -1).join('/'));
+    return lastComponent(path.split(SEPARATORS).slice(0, -1).join('/'));
+}
+
+// Projects in the range, largest first, each with its output per model id
+function rankProjects(records, fromMs, toMs) {
+    const projects = new Map();
+    let total = 0;
+    for (const record of inRange(records, fromMs, toMs)) {
+        const project = projects.get(record.cwd) ?? {cwd: record.cwd, out: 0, models: new Map()};
+        project.out += record.out;
+        project.models.set(record.model, (project.models.get(record.model) ?? 0) + record.out);
+        projects.set(record.cwd, project);
+        total += record.out;
+    }
+    return {total, ranked: [...projects.values()].sort((a, b) => b.out - a.out)};
+}
+
+function projectLabeler(ranked, names, home) {
+    if (names === 'path') {
+        return cwd => home && (cwd === home || cwd.startsWith(`${home}/`) ||
+            cwd.startsWith(`${home}\\`)) ? `~${cwd.slice(home.length)}` : cwd;
+    }
+    const nameCount = {};
+    for (const project of ranked) {
+        const name = lastComponent(project.cwd);
+        nameCount[name] = (nameCount[name] ?? 0) + 1;
+    }
+    return cwd => {
+        const name = lastComponent(cwd);
+        return nameCount[name] > 1 ? `${name} (${parentComponent(cwd)})` : name;
+    };
 }
 
 /**
@@ -177,37 +257,54 @@ function parentComponent(path) {
  *     by output, and the rest summed.
  */
 export function projectStats(records, fromMs, toMs, top = 5, names = 'folder', home = '') {
-    const projects = new Map();
-    let total = 0;
-    for (const record of inRange(records, fromMs, toMs)) {
-        const project = projects.get(record.cwd) ?? {cwd: record.cwd, out: 0};
-        project.out += record.out;
-        projects.set(record.cwd, project);
-        total += record.out;
-    }
-
-    const ranked = [...projects.values()].sort((a, b) => b.out - a.out);
-    const nameCount = {};
-    for (const project of ranked) {
-        const name = lastComponent(project.cwd);
-        nameCount[name] = (nameCount[name] ?? 0) + 1;
-    }
-    const rows = ranked.slice(0, top).map(project => {
-        if (names === 'path') {
-            const cwd = project.cwd;
-            const label = home && (cwd === home || cwd.startsWith(`${home}/`)) ?
-                `~${cwd.slice(home.length)}` : cwd;
-            return {label, out: project.out, share: project.out / total};
-        }
-        const name = lastComponent(project.cwd);
-        return {
-            label: nameCount[name] > 1 ? `${name} (${parentComponent(project.cwd)})` : name,
-            out: project.out,
-            share: project.out / total,
-        };
-    });
+    const {total, ranked} = rankProjects(records, fromMs, toMs);
+    const label = projectLabeler(ranked, names, home);
+    const rows = ranked.slice(0, top).map(project => ({
+        label: label(project.cwd),
+        out: project.out,
+        share: project.out / total,
+    }));
     const rest = ranked.slice(top).reduce((sum, project) => sum + project.out, 0);
     return {total, rows, other: rest > 0 ? {out: rest, share: rest / total} : null};
+}
+
+function modelShares(models, out) {
+    return [...models].map(([model, amount]) => ({
+        model, label: modelLabel(model), out: amount, share: amount / out,
+    })).sort((a, b) => b.out - a.out);
+}
+
+/**
+ * Like `projectStats`, with each project split by model.
+ *
+ * Returns:
+ *     `{total, rows: [{cwd, label, out, share, models}], other: {out, share, models} | null}`,
+ *     where `models` is `[{model, label, out, share}]` largest first, `share` being of the
+ *     project.
+ */
+export function projectModelStats(records, fromMs, toMs, top = 5, names = 'folder', home = '') {
+    const {total, ranked} = rankProjects(records, fromMs, toMs);
+    const label = projectLabeler(ranked, names, home);
+    const rows = ranked.slice(0, top).map(project => ({
+        cwd: project.cwd,
+        label: label(project.cwd),
+        out: project.out,
+        share: project.out / total,
+        models: modelShares(project.models, project.out),
+    }));
+    const rest = new Map();
+    let restOut = 0;
+    for (const project of ranked.slice(top)) {
+        restOut += project.out;
+        for (const [model, amount] of project.models)
+            rest.set(model, (rest.get(model) ?? 0) + amount);
+    }
+    return {
+        total,
+        rows,
+        other: restOut > 0
+            ? {out: restOut, share: restOut / total, models: modelShares(rest, restOut)} : null,
+    };
 }
 
 /**
