@@ -1,0 +1,37 @@
+{
+  "name": "claudometer-cli",
+  "version": "1.0.0",
+  "description": "Your Claude Code plan limits and how you use Claude Code and Cursor, in the terminal and in Claude Code's status line",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "claudometer": "dist/claudometer.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --platform=node --format=esm --target=node18 --outfile=dist/claudometer.js --banner:js=\"#!/usr/bin/env node\"",
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "@claudometer/core": "*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/emanuel36/claudometer.git"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "cursor",
+    "usage",
+    "statusline"
+  ]
+}
