@@ -19,13 +19,13 @@ Needs GNOME Shell 46 and Claude Code signed in with a Pro or Max plan.
 curl -fsSL https://raw.githubusercontent.com/emanuel36/claudometer/main/install.sh | sh
 ```
 
-Then restart GNOME Shell: on X11, press Alt+F2, type `r` and press Enter; on Wayland, log out
-and back in.
+Then log out and back in. On an X11 session you can instead press Alt+F2, type `r` and press
+Enter.
 
 Use the gear at the bottom of the popup to change the top bar's look, the tabs shown, the
 periods and how often the limits refresh.
 
-To update, run the same command again and restart GNOME Shell.
+To update, run the same command again and log out and back in.
 
 ## Privacy
 

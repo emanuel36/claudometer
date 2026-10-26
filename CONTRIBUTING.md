@@ -8,7 +8,8 @@
    ln -s "$PWD/claudometer" ~/.local/share/gnome-shell/extensions/claudometer@emanuel36
    glib-compile-schemas claudometer/schemas
    ```
-2. Restart GNOME Shell: on X11 press Alt+F2, type `r`, Enter; on Wayland log out and in.
+2. Restart GNOME Shell: log out and in, or on X11 press Alt+F2, type `r`, Enter. On GNOME 49
+   and later, a nested shell avoids logging out: `dbus-run-session gnome-shell --devkit --wayland`.
 3. Enable it: `gnome-extensions enable claudometer@emanuel36`.
 
 GNOME Shell caches extension modules, so every code change needs a shell restart.
