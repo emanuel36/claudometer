@@ -20,13 +20,32 @@ afterEach(() => rm(root, {recursive: true, force: true}));
 const event = (overrides = {}) => ({
     timestamp: '1793014651496', model: 'grok-4.7-xhigh', conversationId: 'c1',
     usageEventId: 'e1',
-    tokenUsage: {inputTokens: 100, outputTokens: 20, cacheReadTokens: 3, cacheWriteTokens: 4},
+    kind: 'USAGE_EVENT_KIND_USAGE_BASED',
+    tokenUsage: {inputTokens: 100, outputTokens: 20, cacheReadTokens: 3, cacheWriteTokens: 4,
+        totalCents: 53.45},
     ...overrides,
 });
 
-test('an event becomes an index row', () => {
+test('an event becomes an index row, with what its tokens cost', () => {
     assert.deepEqual(eventRow(event()),
-        ['e1', 1793014651496, 'grok-4.7-xhigh', 20, 100, 3, 4, 'c1']);
+        ['e1', 1793014651496, 'grok-4.7-xhigh', 20, 100, 3, 4, 'c1', 53.45]);
+});
+
+test('tokens a plan or a free credit covered still have their cost', () => {
+    for (const kind of ['USAGE_EVENT_KIND_INCLUDED_IN_BUSINESS', 'USAGE_EVENT_KIND_FREE_CREDIT'])
+        assert.equal(eventRow(event({kind}))[8], 53.45);
+});
+
+test('events Cursor did not charge cost nothing', () => {
+    for (const kind of ['USAGE_EVENT_KIND_ERRORED_NOT_CHARGED',
+        'USAGE_EVENT_KIND_ABORTED_NOT_CHARGED'])
+        assert.equal(eventRow(event({kind}))[8], 0);
+});
+
+test('a missing or odd cost is zero', () => {
+    const tokens = {inputTokens: 1, outputTokens: 1};
+    for (const totalCents of [undefined, null, 'x', -3, NaN])
+        assert.equal(eventRow(event({tokenUsage: {...tokens, totalCents}}))[8], 0);
 });
 
 test('events without tokens or time are dropped', () => {
@@ -39,6 +58,14 @@ test('rows take their project from the conversation', () => {
     const records = eventRecords(rows, new Map([['c1', 'C:\\dev\\app']]));
     assert.deepEqual(records.map(r => [r.cwd, r.model, r.out]),
         [['C:\\dev\\app', 'grok-4.7-xhigh', 20], ['', 'grok-4.7-xhigh', 20]]);
+});
+
+test('records carry the cost, and only when there is one', () => {
+    const records = eventRecords([eventRow(event()),
+        eventRow(event({usageEventId: 'e2', kind: 'USAGE_EVENT_KIND_ERRORED_NOT_CHARGED'}))],
+    new Map());
+    assert.equal(records[0].cents, 53.45);
+    assert.equal('cents' in records[1], false);
 });
 
 test('the session cookie uses the user id of the token', () => {

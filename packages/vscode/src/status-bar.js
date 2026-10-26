@@ -65,7 +65,10 @@ export class StatusBar {
         if (rows.length) {
             tooltip.appendMarkdown('| Limit | Used | Left |\n|:--|--:|--:|\n');
             for (const row of rows) {
-                tooltip.appendMarkdown(`| ${escapeCell(row.name)} | ${Math.round(row.percent)}% | ${
+                // The on-demand row has dollars instead of a share of a limit
+                const used = row.percent === null ? escapeCell(row.text)
+                    : `${Math.round(row.percent)}%`;
+                tooltip.appendMarkdown(`| ${escapeCell(row.name)} | ${used} | ${
                     escapeCell(row.left)} |\n`);
             }
             tooltip.appendMarkdown('\n');

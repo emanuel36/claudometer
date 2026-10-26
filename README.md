@@ -84,6 +84,12 @@ terminal it needs Node.js 22.13 or later; Cursor itself already has what it need
   Cursor Usage (All Models)**.
 - **In the terminal:** run `claudometer cursor on`.
 
+With Cursor chosen as the source, a **Tokens · Cost** switch shows what your tokens cost in
+dollars, per project, model and day, at each model's rates. It includes what your plan or a free
+credit covered, so it is not your bill: what Cursor billed on demand this cycle is the **On
+demand** row in Limits. In the terminal, `claudometer projects --source cursor --count cost` does
+the same. Claude Code has no prices, so it stays in tokens.
+
 Agent chats in the editor land in their project by themselves. Chats of the Cursor CLI do once
 you run **Claudometer: Note the Projects of Cursor CLI Chats**, or `claudometer cursor hook on`.
 

@@ -95,6 +95,13 @@ Projects come from the `cwd` of Claude Code's transcripts, and, for Cursor, from
 database. Only Cursor CLI chats need the hook, which logs `conversation_id` and the workspace
 root to `cursor-conversations.jsonl`.
 
+Cost is Cursor only. A usage event's `tokenUsage.totalCents` is what its tokens cost at the
+model's rates, plan-covered and free-credit events included, so it is not what was billed;
+events of kind `*_NOT_CHARGED` count as zero. It is stored as the optional last column of the
+summary index (`cents`), which leaves Claude Code's index unchanged, and the Cursor index
+version was raised to refetch it once. What was billed on demand comes from the plan summary
+(`individualUsage.onDemand.used`, in cents), shown as the `On demand` limit row.
+
 ```bash
 cd packages
 npm ci

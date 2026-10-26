@@ -106,6 +106,16 @@ const parsed = parseIndex(serializeIndex(files, records));
 check('index round trip', [parsed.files, [...parsed.records.values()]],
     [files, [...records.values()]]);
 
+// the cost of Cursor's events is an extra last column
+const priced = new Map([['a', record({id: 'a', cents: 53.5})], ['b', record({id: 'b'})]]);
+const pricedText = JSON.parse(serializeIndex({}, priced)).records;
+check('a cost is the last column, and only when there is one',
+    [pricedText[0].length, pricedText[0][10], pricedText[1].length], [11, 53.5, 10]);
+check('the cost round trips', [...parseIndex(serializeIndex({}, priced)).records.values()]
+    .map(r => r.cents), [53.5, undefined]);
+check('an index without costs is as before', 'cents' in
+    [...parseIndex(serializeIndex(files, records)).records.values()][0], false);
+
 for (const [name, text] of [['empty', ''], ['invalid JSON', '{nope'], ['array', '[]'],
     ['other version', '{"version":2,"files":{},"records":[]}']]) {
     const p = parseIndex(text);

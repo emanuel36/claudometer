@@ -2,9 +2,9 @@
 import System from 'system';
 
 import {
-    bucketRecords, countAmount, dayStats, formatTokens, hourStats, modelFamily, modelIdTotals,
-    modelLabel, modelTotals, parseHiddenProjects, periodStats, projectModelStats, projectStats,
-    rangeFrom, rangeHeader, rangeStart, selectRecords,
+    bucketRecords, countAmount, dayStats, formatCost, formatTokens, hourStats, modelFamily,
+    modelIdTotals, modelLabel, modelTotals, parseHiddenProjects, periodStats, projectModelStats,
+    projectStats, rangeFrom, rangeHeader, rangeStart, selectRecords,
 } from '../src/history/stats.js';
 
 let failures = 0;
@@ -223,6 +223,27 @@ check('buckets can keep the model id', bucketRecords([rec({model: 'gpt-5.6'})],
 
 check('count amount all',
     countAmount(rec({out: 1, input: 2, cacheRead: 3, cacheWrite: 4}), 'all'), 10);
+// cost, in cents, only Cursor's events have it
+const priced = [rec({out: 4, cents: 250}), rec({out: 9, cents: 40.5}), rec({out: 7})];
+check('count amount cost', priced.map(r => countAmount(r, 'cost')), [250, 40.5, 0]);
+check('cost drops what cost nothing',
+    selectRecords(priced, {count: 'cost', hidden: []}).map(r => r.out), [250, 40.5]);
+check('other counts keep the free ones',
+    selectRecords(priced, {count: 'output', hidden: []}).map(r => r.out), [4, 9, 7]);
+const costBuckets = bucketRecords([rec({cents: 100}), rec({cents: 20.5}), rec({out: 1})],
+    {keepModel: true});
+check('buckets sum the cost', costBuckets.map(b => b.cents), [120.5]);
+check('buckets without a cost keep their shape',
+    'cents' in bucketRecords([rec(), rec()])[0], false);
+
+// formatCost
+check('formatCost cents', formatCost(42), '$0.42');
+check('formatCost dollars and cents', formatCost(1240), '$12.40');
+check('formatCost whole dollars', formatCost(43210), '$432');
+check('formatCost thousands', formatCost(123456), '$1.2K');
+check('formatCost many thousands', formatCost(1234567), '$12K');
+check('formatCost zero', formatCost(0), '$0.00');
+check('formatCost rounds up to thousands', formatCost(99960), '$1.0K');
 check('header for all', rangeHeader('all', new Date(2025, 9, 3).getTime()), 'SINCE OCT 2025');
 check('header for 30d', rangeHeader('30d', 0), 'LAST 30 DAYS');
 

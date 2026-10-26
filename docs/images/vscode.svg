@@ -64,7 +64,7 @@
 <rect x="56" y="334" width="10" height="10" rx="2" fill="#f0bea9"/>
 <text x="74" y="343" fill="#e6e6e6">dotfiles</text><text x="236" y="343" fill="#9d9d9d" text-anchor="end">12%</text><text x="292" y="343" fill="#ffffff" font-weight="700" text-anchor="end">252K</text>
 <text x="84" y="361" fill="#9d9d9d">Haiku 4.5</text><text x="236" y="361" fill="#9d9d9d" text-anchor="end">100%</text><text x="292" y="361" fill="#9d9d9d" text-anchor="end">252K</text>
-<rect x="56" y="370" width="236" height="1" fill="#2b2b2b"/>
+<rect x="56" y="354" width="236" height="1" fill="#2b2b2b"/>
 <rect x="56" y="378" width="10" height="10" rx="2" fill="#9a9a9a"/>
 <text x="74" y="387" fill="#e6e6e6">blog</text><text x="236" y="387" fill="#9d9d9d" text-anchor="end">9%</text><text x="292" y="387" fill="#ffffff" font-weight="700" text-anchor="end">189K</text>
 </g>
@@ -95,14 +95,15 @@
 <text x="507" y="413" font-size="11" fill="#de8668">42% &#183; 18%</text>
 <text x="574" y="413" font-size="11" fill="#cccccc">LF</text>
 <!-- The status bar item's tooltip -->
-<g filter="url(#shadow)"><rect x="392" y="276" width="200" height="116" rx="4" fill="#252526" stroke="#454545"/></g>
-<text x="404" y="296" font-size="12" font-weight="700" fill="#e6e6e6">Claudometer</text>
+<g filter="url(#shadow)"><rect x="392" y="260" width="200" height="132" rx="4" fill="#252526" stroke="#454545"/></g>
+<text x="404" y="280" font-size="12" font-weight="700" fill="#e6e6e6">Claudometer</text>
 <g font-size="11" style="font-feature-settings:'tnum'">
-<text x="404" y="316" font-weight="600" fill="#cccccc">Limit</text><text x="530" y="316" font-weight="600" fill="#cccccc" text-anchor="end">Used</text><text x="580" y="316" font-weight="600" fill="#cccccc" text-anchor="end">Left</text>
-<rect x="404" y="322" width="176" height="1" fill="#454545"/>
-<text x="404" y="338" fill="#cccccc">5-hour</text><text x="530" y="338" fill="#cccccc" text-anchor="end">42%</text><text x="580" y="338" fill="#cccccc" text-anchor="end">2h 14m</text>
-<text x="404" y="354" fill="#cccccc">Weekly</text><text x="530" y="354" fill="#cccccc" text-anchor="end">18%</text><text x="580" y="354" fill="#cccccc" text-anchor="end">3d 5h</text>
-<text x="404" y="370" fill="#cccccc">Cursor plan</text><text x="530" y="370" fill="#cccccc" text-anchor="end">23%</text><text x="580" y="370" fill="#cccccc" text-anchor="end">12d 4h</text>
+<text x="404" y="300" font-weight="600" fill="#cccccc">Limit</text><text x="530" y="300" font-weight="600" fill="#cccccc" text-anchor="end">Used</text><text x="580" y="300" font-weight="600" fill="#cccccc" text-anchor="end">Left</text>
+<rect x="404" y="306" width="176" height="1" fill="#454545"/>
+<text x="404" y="322" fill="#cccccc">5-hour</text><text x="530" y="322" fill="#cccccc" text-anchor="end">42%</text><text x="580" y="322" fill="#cccccc" text-anchor="end">2h 14m</text>
+<text x="404" y="338" fill="#cccccc">Weekly</text><text x="530" y="338" fill="#cccccc" text-anchor="end">18%</text><text x="580" y="338" fill="#cccccc" text-anchor="end">3d 5h</text>
+<text x="404" y="354" fill="#cccccc">Cursor plan</text><text x="530" y="354" fill="#cccccc" text-anchor="end">23%</text><text x="580" y="354" fill="#cccccc" text-anchor="end">12d 4h</text>
+<text x="404" y="370" fill="#cccccc">On demand</text><text x="530" y="370" fill="#cccccc" text-anchor="end">$10.06</text><text x="580" y="370" fill="#cccccc" text-anchor="end">12d 4h</text>
 <text x="404" y="386" fill="#9d9d9d">Updated 2 min ago</text>
 </g>
 </g>
