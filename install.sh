@@ -1,0 +1,52 @@
+#!/bin/sh
+# Installs or updates Claudometer from the main branch on GitHub:
+#   curl -fsSL https://raw.githubusercontent.com/emanuel36/claudometer/main/install.sh | sh
+set -eu
+
+UUID=claudometer@emanuel36
+URL=${CLAUDOMETER_URL:-https://github.com/emanuel36/claudometer/archive/refs/heads/main.tar.gz}
+EXTENSIONS=${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions
+DEST=$EXTENSIONS/$UUID
+
+fail() {
+    echo "Claudometer: $*" >&2
+    exit 1
+}
+
+for tool in curl tar glib-compile-schemas gsettings; do
+    command -v "$tool" >/dev/null || fail "$tool is needed but was not found."
+done
+if [ -L "$DEST" ]; then
+    fail "$DEST is a link to a source folder; update it with git pull there instead."
+fi
+
+mkdir -p "$EXTENSIONS"
+STAGE=$(mktemp -d "$EXTENSIONS/.$UUID.XXXXXX")
+trap 'rm -rf "$STAGE"' EXIT
+
+echo "Downloading Claudometer…"
+curl -fsSL "$URL" | tar -xz -C "$STAGE" --strip-components=1
+mkdir "$STAGE/$UUID"
+for item in extension.js prefs.js metadata.json stylesheet.css schemas src icons LICENSE; do
+    mv "$STAGE/$item" "$STAGE/$UUID/"
+done
+glib-compile-schemas "$STAGE/$UUID/schemas"
+
+rm -rf "$DEST"
+mv "$STAGE/$UUID" "$DEST"
+
+# The running shell does not know a new extension yet, so add it to the enabled list directly;
+# it starts after the shell restarts.
+enabled=$(gsettings get org.gnome.shell enabled-extensions)
+case $enabled in
+    *"'$UUID'"*) ;;
+    "@as []") gsettings set org.gnome.shell enabled-extensions "['$UUID']" ;;
+    *) gsettings set org.gnome.shell enabled-extensions "${enabled%]}, '$UUID']" ;;
+esac
+
+echo "Claudometer is installed in $DEST."
+if [ "${XDG_SESSION_TYPE:-}" = x11 ]; then
+    echo "Restart GNOME Shell to start it: press Alt+F2, type r and press Enter."
+else
+    echo "Log out and back in to start it."
+fi
