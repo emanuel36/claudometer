@@ -41,7 +41,8 @@ export class UsageClient {
         try {
             this._credentialsMonitor = Gio.File.new_for_path(credentialsPath)
                 .monitor_file(Gio.FileMonitorFlags.NONE, null);
-            this._credentialsMonitor.connect('changed', () => this._refreshSoon());
+            this._credentialsId = this._credentialsMonitor.connect('changed',
+                () => this._refreshSoon());
         } catch (e) {
             console.warn('Claudometer: Cannot watch the Claude Code login:', e.message);
         }
@@ -191,6 +192,8 @@ export class UsageClient {
         }
         this._timerId = this._retryId = this._eventId = null;
         this._networkMonitor.disconnect(this._networkId);
+        if (this._credentialsId)
+            this._credentialsMonitor.disconnect(this._credentialsId);
         this._credentialsMonitor?.cancel();
         this._credentialsMonitor = null;
         this._session.abort();
