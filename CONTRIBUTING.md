@@ -28,6 +28,7 @@ GNOME Shell caches extension modules, so every code change needs a shell restart
 | `src/prefs/` | Preference choices and folders, and the preferences window's rows and previews |
 | `icons/` | The extension icon and the tab icons |
 | `tests/` | Tests for the pure modules |
+| `package.json`, `eslint.config.js`, `.github/` | The linter and the CI workflow; not part of the extension |
 | `docs/` | The design and the README mockups |
 | `install.sh` | The one-command install from the README: downloads `main`, compiles the schema, enables the extension |
 
@@ -46,6 +47,16 @@ bash tests/run.sh
 ```
 
 It prints one line per test file, and the failing checks of the first file that fails.
+
+## Lint
+
+```bash
+npm ci
+npm run lint
+```
+
+`eslint.config.js` is the GJS config from the [GJS style guide](https://gjs.guide/guides/gjs/style-guide.html).
+The Extension workflow runs the lint, the tests and the package check on every pull request.
 
 ## README image
 
@@ -66,6 +77,8 @@ journalctl --user -b | grep -i claudometer
 ```bash
 gnome-extensions pack --force --extra-source=src --extra-source=icons
 ```
+
+With `-o <folder>`, the folder must exist first; `pack` crashes otherwise.
 
 The zip must not contain `schemas/gschemas.compiled`; GNOME compiles the schema on install.
 
