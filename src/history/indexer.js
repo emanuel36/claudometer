@@ -1,3 +1,4 @@
+#!/usr/bin/env -S gjs -m
 // Helper process: gjs -m indexer.js <projectsDir> <indexPath> <summaryPath> [keepDays]
 // Keeps the transcript index up to date. It runs apart from GNOME Shell because the first run
 // reads a lot of data.

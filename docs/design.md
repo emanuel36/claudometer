@@ -21,7 +21,7 @@ A GNOME Shell extension that answers two questions without leaving the desktop:
 - **Light on the shell.** No synchronous file IO in the shell process. Reading the history is
   slow the first time, so a helper process does it and the shell only reads a small summary.
   Everything created in `enable()` is destroyed in `disable()`.
-- **Targets GNOME Shell 46**, GJS with ES modules, libadwaita 1.5 for the preferences.
+- **Targets GNOME Shell 46 to 51**, GJS with ES modules, libadwaita 1.5 for the preferences.
 
 ## Top bar
 
@@ -42,8 +42,8 @@ The indicator is an optional icon followed by the usage.
 - The text uses the top bar's own font, like the clock. While values are outdated, the indicator
   fades; before the first value it shows `…`.
 
-The icon is a spark: 12 rounded strokes of uneven length radiating from the center, in the
-accent color.
+The icon is a gauge: a dial open at the bottom, with a needle past the middle and a dot at
+its pivot, in the accent color. It is original art, not Anthropic's logo.
 
 ## Popup
 
@@ -127,7 +127,9 @@ toggle buttons; on/off options are switches.
 - **Limits:** the usage endpoint Claude Code itself uses, read with Claude Code's login from its
   folder (`CLAUDE_CONFIG_DIR` or `~/.claude`). The login is never renewed here, so Claude Code
   stays signed in. Refreshes back off when the service answers 429, wait while offline, and
-  resume when the network or the login changes.
+  resume when the network or the login changes. The last values, the time of the last request
+  and the backoff are saved after every request, so after a screen lock the values show at once
+  and the next request comes when the interval or the backoff ends.
 - **History:** a helper process reads Claude Code's transcripts incrementally, merges repeated
   messages by id, and writes hourly totals per project and model family. The shell reads only
   that summary, asynchronously. What has been read stays after Claude Code deletes old

@@ -1,0 +1,12 @@
+# A headless GNOME Shell to load the extension in; BASE picks the Fedora release, and so the
+# GNOME version (see run.sh).
+ARG BASE=fedora:40
+FROM ${BASE}
+RUN dnf install -y --setopt=install_weak_deps=False \
+        gnome-shell gjs glib2 dbus-daemon dbus-tools mesa-dri-drivers unzip \
+    && dnf clean all
+# Xwayland needs it, even with no X11 client
+RUN mkdir -m 1777 -p /tmp/.X11-unix
+RUN useradd --create-home tester
+USER tester
+WORKDIR /home/tester

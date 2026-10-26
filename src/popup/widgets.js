@@ -4,6 +4,16 @@ import Pango from 'gi://Pango';
 import St from 'gi://St';
 
 /**
+ * A vertical `St.BoxLayout`, with `params` for the rest. GNOME 48 added `orientation` and
+ * GNOME 51 removed `vertical`, the only choice in GNOME 46 and 47.
+ */
+export function createVBox(params = {}) {
+    const vertical = 'orientation' in St.BoxLayout.prototype
+        ? {orientation: Clutter.Orientation.VERTICAL} : {vertical: true};
+    return new St.BoxLayout({...params, ...vertical});
+}
+
+/**
  * The block that replaces a tab's body when it has nothing to show: an icon, a title and one
  * line, centered in the tab area.
  *
@@ -12,16 +22,14 @@ import St from 'gi://St';
  *     (status.js) or the result of `limitsScreen`.
  */
 export function createStateBlock() {
-    const actor = new St.BoxLayout({
+    const actor = createVBox({
         style_class: 'cm-state',
-        vertical: true,
         x_expand: true,
         y_expand: true,
         visible: false,
     });
     // Takes the spare height of `actor`, so the three lines sit in its middle
-    const content = new St.BoxLayout({
-        vertical: true,
+    const content = createVBox({
         x_expand: true,
         y_expand: true,
         y_align: Clutter.ActorAlign.CENTER,

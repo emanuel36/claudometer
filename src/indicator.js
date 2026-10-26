@@ -19,7 +19,7 @@ import {UsageClient} from './limits/usage-client.js';
 import {
     createActivityView, createModelsView, createProjectsView, createTabBar,
 } from './popup/views.js';
-import {createFooter} from './popup/widgets.js';
+import {createFooter, createVBox} from './popup/widgets.js';
 
 const STALE_OPACITY = 115;
 const PANEL_KEYS = ['panel-style', 'panel-limit', 'panel-color', 'color-scale', 'show-icon'];
@@ -32,22 +32,25 @@ const OPEN_TICK_SECONDS = 60;
  * Projects, Activity and Models tabs.
  */
 export const Indicator = GObject.registerClass(
-class Indicator extends PanelMenu.Button {
+class ClaudometerIndicator extends PanelMenu.Button {
     /**
      * Args:
      *     path: The extension's folder.
      *     settings: The extension's `Gio.Settings`.
-     *     dataDir: Folder for the transcript index and its summary.
+     *     dataDir: Folder for the transcript index, its summary and the usage cache.
+     *     userAgent: Sent with every request to the usage service.
      *     openPreferences: Opens the preferences window.
      */
-    _init({path, settings, dataDir, openPreferences}) {
+    _init({path, settings, dataDir, userAgent, openPreferences}) {
         // 0.5 centers the popup under the button
         super._init(0.5, 'Claudometer');
         this._path = path;
         this._settings = settings;
+        this._userAgent = userAgent;
         this._openPreferences = openPreferences;
         this._indexPath = GLib.build_filenamev([dataDir, 'index.json']);
         this._summaryPath = GLib.build_filenamev([dataDir, 'summary.json']);
+        this._usageCachePath = GLib.build_filenamev([dataDir, 'usage.json']);
         // Hourly totals for the activity tabs; null until there are some
         this._records = null;
         this._cancellable = new Gio.Cancellable();
@@ -124,9 +127,13 @@ class Indicator extends PanelMenu.Button {
     }
 
     _createClient() {
-        this._client = new UsageClient(
-            GLib.build_filenamev([this._claudeDir(), '.credentials.json']),
-            this._settings.get_int('refresh-interval'), usage => this._onUsage(usage));
+        this._client = new UsageClient({
+            credentialsPath: GLib.build_filenamev([this._claudeDir(), '.credentials.json']),
+            cachePath: this._usageCachePath,
+            intervalSeconds: this._settings.get_int('refresh-interval'),
+            userAgent: this._userAgent,
+            onChange: usage => this._onUsage(usage),
+        });
     }
 
     // The login and the history both come from the new folder
@@ -172,7 +179,7 @@ class Indicator extends PanelMenu.Button {
         });
         this._showStatus();
 
-        const body = new St.BoxLayout({style_class: 'cm-popup', vertical: true, x_expand: true});
+        const body = createVBox({style_class: 'cm-popup', x_expand: true});
         body.add_child(this._tabBar.actor);
         for (const view of Object.values(this._tabViews))
             body.add_child(view);

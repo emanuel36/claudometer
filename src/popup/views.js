@@ -6,7 +6,7 @@ import {
     rangeHeader,
 } from '../history/stats.js';
 import {SCREEN_STATES} from '../limits/status.js';
-import {createStateBlock} from './widgets.js';
+import {createStateBlock, createVBox} from './widgets.js';
 
 // Checked for color-blind separation on the popup's dark background (any two can be adjacent)
 export const FAMILY_COLORS = {
@@ -52,7 +52,7 @@ export function createTabBar(tabs, selected, onSelect) {
     const actor = new St.BoxLayout({style_class: 'cm-tabs', x_expand: true});
     const buttons = new Map();
     for (const {name, gicon} of tabs) {
-        const content = new St.BoxLayout({vertical: true, x_align: Clutter.ActorAlign.CENTER});
+        const content = createVBox({x_align: Clutter.ActorAlign.CENTER});
         content.add_child(new St.Icon({
             gicon,
             icon_size: 16,
@@ -131,7 +131,7 @@ export function createSwitch(names, selected, onSelect) {
 }
 
 export function legendRow(totals) {
-    const row = new St.BoxLayout({style_class: 'cm-legend', vertical: false});
+    const row = new St.BoxLayout({style_class: 'cm-legend'});
     for (const {family} of totals) {
         const [r, g, b] = FAMILY_COLORS[family].map(c => Math.round(c * 255));
         row.add_child(new St.Widget({
@@ -242,17 +242,17 @@ function createDrawing(height, draw) {
  */
 export function createActivityView() {
     const state = {range: '7d', days: [], hours: new Array(24).fill(0)};
-    const actor = new St.BoxLayout({vertical: true, x_expand: true, y_expand: true});
+    const actor = createVBox({x_expand: true, y_expand: true});
     let latest = {records: [], nowMs: Date.now()};
     let loaded = false;
 
     const stateBlock = createStateBlock();
-    const content = new St.BoxLayout({vertical: true, x_expand: true, visible: false});
+    const content = createVBox({x_expand: true, visible: false});
     const head = new St.BoxLayout({style_class: 'cm-act-head'});
     const rangeName = new St.Label({style_class: 'cm-hdr', x_expand: true,
         y_align: Clutter.ActorAlign.CENTER});
     const totalValue = new St.Label({style_class: 'cm-val', y_align: Clutter.ActorAlign.CENTER});
-    const legend = new St.BoxLayout({vertical: true});
+    const legend = createVBox();
     const bars = createDrawing(90, (cr, w, h) => drawStackedBars(cr, w, h, state.days));
     const strip = createDrawing(30, (cr, w, h) => drawHourStrip(cr, w, h, state.hours));
 
@@ -383,7 +383,7 @@ function colorSquare(color) {
  *     The table's actor.
  */
 function shareTable(title, rows) {
-    const table = new St.BoxLayout({vertical: true, x_expand: true});
+    const table = createVBox({x_expand: true});
     table.add_child(stackedBar(rows.map(row => row.share), rows.map(row => row.color)));
     const header = new St.BoxLayout({style_class: 'cm-sh-header'});
     header.add_child(new St.Widget({width: 8}));
@@ -416,12 +416,12 @@ function shareTable(title, rows) {
  */
 export function createProjectsView() {
     const state = {range: 'today', names: 'folder', home: ''};
-    const actor = new St.BoxLayout({vertical: true, x_expand: true, y_expand: true});
+    const actor = createVBox({x_expand: true, y_expand: true});
     let latest = {records: [], nowMs: Date.now()};
     let loaded = false;
 
     const stateBlock = createStateBlock();
-    const content = new St.BoxLayout({vertical: true, x_expand: true, visible: false});
+    const content = createVBox({x_expand: true, visible: false});
 
     const show = screen => {
         stateBlock.show(screen);
@@ -497,12 +497,12 @@ export function createProjectsView() {
  */
 export function createModelsView() {
     const state = {range: 'today'};
-    const actor = new St.BoxLayout({vertical: true, x_expand: true, y_expand: true});
+    const actor = createVBox({x_expand: true, y_expand: true});
     let latest = {records: [], nowMs: Date.now()};
     let loaded = false;
 
     const stateBlock = createStateBlock();
-    const content = new St.BoxLayout({vertical: true, x_expand: true, visible: false});
+    const content = createVBox({x_expand: true, visible: false});
 
     const show = screen => {
         stateBlock.show(screen);

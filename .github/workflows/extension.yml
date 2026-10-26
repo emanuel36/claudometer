@@ -1,0 +1,40 @@
+name: Extension
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    # Ubuntu 24.04 ships GNOME 46 and its gjs
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install gjs and gnome-extensions
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gjs gnome-shell unzip
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: bash tests/run.sh
+      - name: Pack
+        # pack crashes when the output folder does not exist
+        run: |
+          mkdir -p dist
+          gnome-extensions pack --force --extra-source=src --extra-source=icons -o dist
+          if unzip -l dist/*.zip | grep -q gschemas.compiled; then
+            echo "The zip must not contain schemas/gschemas.compiled" >&2
+            exit 1
+          fi

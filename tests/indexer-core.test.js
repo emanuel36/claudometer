@@ -54,7 +54,7 @@ function setMtime(path, ms) {
 const recent = now - 2 * DAY;
 
 // first run: two files, repeated lines of one message, one id shared by both files
-const a = write('p1/a.jsonl', [
+write('p1/a.jsonl', [
     msgLine('m1', 5, recent), msgLine('m1', 60, recent + 1000), msgLine('m1', 200, recent + 2000),
     msgLine('m2', 40, recent + 3000), '{"type":"user"}',
 ]);
@@ -113,7 +113,7 @@ check('the rebuilt index is valid JSON', typeof JSON.parse(rebuiltText), 'object
 const locked = write('p6/locked.jsonl', [msgLine('m9', 9, recent)]);
 GLib.chmod(locked, 0o000);
 write('p7/ok.jsonl', [msgLine('m10', 12, recent)]);
-let blocked = null;
+let blocked;
 try {
     blocked = updateIndex(projects, indexPath, summaryPath);
 } catch (e) {

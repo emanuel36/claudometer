@@ -1,2 +1,4 @@
 *.zip
 schemas/gschemas.compiled
+node_modules/
+dist/

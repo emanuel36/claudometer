@@ -14,6 +14,7 @@ export default class ClaudometerExtension extends Extension {
             path: this.path,
             settings: this._settings,
             dataDir: GLib.build_filenamev([GLib.get_user_data_dir(), this.uuid]),
+            userAgent: `Claudometer/${this.metadata['version-name']}`,
             openPreferences: () => this.openPreferences(),
         });
         const position = this._position();
