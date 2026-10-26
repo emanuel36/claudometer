@@ -1,0 +1,258 @@
+{
+  "name": "claudometer",
+  "displayName": "Claudometer",
+  "description": "Your Claude Code plan limits in the status bar, and how you use Claude Code and Cursor over time: per day, per project and per model.",
+  "version": "1.0.0",
+  "publisher": "emanuel36",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/emanuel36/claudometer.git"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "cursor",
+    "usage",
+    "limits",
+    "tokens"
+  ],
+  "main": "./dist/extension.cjs",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claudometer",
+          "title": "Claudometer",
+          "icon": "media/activity-bar.svg"
+        }
+      ]
+    },
+    "views": {
+      "claudometer": [
+        {
+          "type": "webview",
+          "id": "claudometer.view",
+          "name": "Usage"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "claudometer.show",
+        "title": "Show",
+        "category": "Claudometer"
+      },
+      {
+        "command": "claudometer.refresh",
+        "title": "Refresh",
+        "category": "Claudometer",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "claudometer.rebuild",
+        "title": "Rebuild the History",
+        "category": "Claudometer"
+      },
+      {
+        "command": "claudometer.exportCsv",
+        "title": "Export the History as CSV",
+        "category": "Claudometer"
+      },
+      {
+        "command": "claudometer.enableCursor",
+        "title": "Add Cursor Usage (All Models)",
+        "category": "Claudometer"
+      },
+      {
+        "command": "claudometer.disableCursor",
+        "title": "Remove Cursor Usage",
+        "category": "Claudometer"
+      },
+      {
+        "command": "claudometer.installCursorHook",
+        "title": "Note the Projects of Cursor CLI Chats (Cursor Hook)",
+        "category": "Claudometer"
+      },
+      {
+        "command": "claudometer.removeCursorHook",
+        "title": "Remove the Cursor Hook",
+        "category": "Claudometer"
+      },
+      {
+        "command": "claudometer.openSettings",
+        "title": "Settings",
+        "category": "Claudometer",
+        "icon": "$(gear)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "claudometer.refresh",
+          "when": "view == claudometer.view",
+          "group": "navigation"
+        },
+        {
+          "command": "claudometer.openSettings",
+          "when": "view == claudometer.view",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": [
+      {
+        "title": "Status bar",
+        "properties": {
+          "claudometer.statusBar.limit": {
+            "type": "string",
+            "enum": ["five-hour", "weekly", "both"],
+            "enumItemLabels": ["5-hour", "Weekly", "Both"],
+            "default": "five-hour",
+            "description": "The limit shown in the status bar."
+          },
+          "claudometer.statusBar.color": {
+            "type": "string",
+            "enum": ["white", "orange", "usage"],
+            "enumItemLabels": ["Theme color", "Orange", "Changes with usage"],
+            "default": "usage",
+            "description": "The color of the usage in the status bar."
+          },
+          "claudometer.statusBar.colorScale": {
+            "type": "string",
+            "enum": ["orange", "white-red", "blue-red"],
+            "enumItemLabels": ["Orange tones", "White to red", "Blue to red"],
+            "default": "orange",
+            "description": "The scale the color follows when it changes with usage."
+          },
+          "claudometer.statusBar.showIcon": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show the icon before the usage."
+          },
+          "claudometer.statusBar.alignment": {
+            "type": "string",
+            "enum": ["left", "right"],
+            "default": "right",
+            "description": "The side of the status bar the usage sits on."
+          }
+        }
+      },
+      {
+        "title": "Panel",
+        "properties": {
+          "claudometer.tabs": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["Projects", "Activity", "Models"]},
+            "default": ["Projects", "Activity", "Models"],
+            "description": "The tabs shown after Limits."
+          },
+          "claudometer.modelLimits": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show the weekly limits of single models, when the plan has them."
+          },
+          "claudometer.resetStyle": {
+            "type": "string",
+            "enum": ["countdown", "clock"],
+            "enumItemLabels": ["Countdown", "Clock time"],
+            "default": "countdown",
+            "description": "How the reset time of a limit is shown."
+          },
+          "claudometer.count": {
+            "type": "string",
+            "enum": ["output", "output-input", "all"],
+            "enumItemLabels": ["Output", "Output and input", "All, including cache"],
+            "default": "output",
+            "description": "The tokens the charts and lists count."
+          },
+          "claudometer.activityRange": {
+            "type": "string",
+            "enum": ["7d", "30d", "6m", "all"],
+            "default": "7d",
+            "description": "The range Activity starts on."
+          },
+          "claudometer.listsRange": {
+            "type": "string",
+            "enum": ["today", "7d", "30d", "all"],
+            "default": "7d",
+            "description": "The range Projects and Models start on."
+          },
+          "claudometer.projectNames": {
+            "type": "string",
+            "enum": ["folder", "path"],
+            "enumItemLabels": ["Folder name", "Path from home"],
+            "default": "folder",
+            "description": "How projects are named."
+          },
+          "claudometer.hiddenProjects": {
+            "type": "array",
+            "items": {"type": "string"},
+            "default": [],
+            "description": "Folder names hidden from every tab."
+          }
+        }
+      },
+      {
+        "title": "Data",
+        "properties": {
+          "claudometer.refreshInterval": {
+            "type": "number",
+            "enum": [60, 300, 900, 1800, 3600],
+            "enumItemLabels": ["1 min", "5 min", "15 min", "30 min", "1 h"],
+            "default": 300,
+            "description": "How often the limits refresh, in seconds."
+          },
+          "claudometer.readActivity": {
+            "type": "string",
+            "enum": ["every-5", "every-15", "on-open"],
+            "enumItemLabels": ["Every 5 min", "Every 15 min", "When the panel opens"],
+            "default": "every-5",
+            "description": "How often the history is read."
+          },
+          "claudometer.claudeDir": {
+            "type": "string",
+            "default": "",
+            "description": "Claude Code's folder. Empty uses CLAUDE_CONFIG_DIR or ~/.claude."
+          },
+          "claudometer.keepDays": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "description": "Days of history kept. 0 keeps it forever."
+          },
+          "claudometer.cursor.enabled": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "Add Cursor's usage, every model, to the history and the limits. Claudometer reads Cursor's login on this computer and sends it only to `cursor.com`."
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "package": "node build.mjs && vsce package --no-dependencies --out claudometer.vsix",
+    "publish:vsce": "vsce publish --no-dependencies",
+    "publish:ovsx": "ovsx publish claudometer.vsix"
+  },
+  "dependencies": {
+    "@claudometer/core": "*"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.25.0",
+    "ovsx": "^0.10.0"
+  }
+}
