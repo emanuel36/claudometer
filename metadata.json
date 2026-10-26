@@ -1,6 +1,6 @@
 {
   "name": "Claudometer",
-  "description": "Your Claude Code plan limits in the top bar, and how you use Claude Code over time: per day, per project and per model.\n\nIt reads the Claude Code login and history on this computer. The login is only sent to api.anthropic.com to read your limits, and nothing else leaves the computer. Not affiliated with or endorsed by Anthropic.",
+  "description": "Your Claude Code plan limits in the top bar, and a history of how you use Claude Code: activity per day, and usage per project and per model.\n\n* 5-hour, weekly and per-model limits, with their reset times\n* Percentage, bar or ring in the top bar\n* Activity, Projects and Models tabs, with CSV export\n\nIt reads the Claude Code login and history on this computer. The login is only sent to api.anthropic.com to read your limits, and nothing else leaves the computer. Not affiliated with or endorsed by Anthropic.",
   "uuid": "claudometer@emanuel36",
   "version-name": "1.0",
   "shell-version": ["46"],
