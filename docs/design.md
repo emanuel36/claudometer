@@ -135,4 +135,7 @@ toggle buttons; on/off options are switches.
 
 ## Mockups
 
-`docs/images/` holds one mockup per tab, drawn with made-up data.
+`docs/images/` holds one mockup per tab, drawn with made-up data, and `overview.svg`, the
+README image: the four tabs in two columns that end together on a desktop background, the
+shorter column topped by a magnified piece of the top bar with the indicator in its default
+look. It is built from the tab mockups, so it is rebuilt whenever one of them changes.
