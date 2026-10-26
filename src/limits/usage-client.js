@@ -12,6 +12,8 @@ const OFFLINE_RETRY_SECONDS = 30;
 const EVENT_DELAY_SECONDS = 1;
 // The service answers 429 when asked too often, so events never ask again sooner than this
 const EVENT_MIN_GAP_SECONDS = 60;
+// A stalled connection fails after this long instead of leaving the limits loading
+const REQUEST_TIMEOUT_SECONDS = 30;
 
 /**
  * Keeps the plan's usage limits up to date, using Claude Code's own login. The login is never
@@ -22,10 +24,13 @@ const EVENT_MIN_GAP_SECONDS = 60;
  * shown.
  */
 export class UsageClient {
-    constructor(credentialsPath, intervalSeconds, onChange) {
+    constructor(credentialsPath, intervalSeconds, userAgent, onChange) {
         this._credentialsPath = credentialsPath;
         this._onChange = onChange;
-        this._session = new Soup.Session();
+        this._session = new Soup.Session({
+            timeout: REQUEST_TIMEOUT_SECONDS,
+            user_agent: userAgent,
+        });
         this._snapshot = {state: State.FRESH, detail: null, data: null, lastSuccessMs: 0};
         this._rejectedToken = null;
         this._lastRequestMs = 0;

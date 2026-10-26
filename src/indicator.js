@@ -38,13 +38,15 @@ class Indicator extends PanelMenu.Button {
      *     path: The extension's folder.
      *     settings: The extension's `Gio.Settings`.
      *     dataDir: Folder for the transcript index and its summary.
+     *     userAgent: Sent with every request to the usage service.
      *     openPreferences: Opens the preferences window.
      */
-    _init({path, settings, dataDir, openPreferences}) {
+    _init({path, settings, dataDir, userAgent, openPreferences}) {
         // 0.5 centers the popup under the button
         super._init(0.5, 'Claudometer');
         this._path = path;
         this._settings = settings;
+        this._userAgent = userAgent;
         this._openPreferences = openPreferences;
         this._indexPath = GLib.build_filenamev([dataDir, 'index.json']);
         this._summaryPath = GLib.build_filenamev([dataDir, 'summary.json']);
@@ -126,7 +128,8 @@ class Indicator extends PanelMenu.Button {
     _createClient() {
         this._client = new UsageClient(
             GLib.build_filenamev([this._claudeDir(), '.credentials.json']),
-            this._settings.get_int('refresh-interval'), usage => this._onUsage(usage));
+            this._settings.get_int('refresh-interval'), this._userAgent,
+            usage => this._onUsage(usage));
     }
 
     // The login and the history both come from the new folder
