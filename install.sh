@@ -36,12 +36,19 @@ rm -rf "$DEST"
 mv "$STAGE/$UUID" "$DEST"
 
 # The running shell does not know a new extension yet, so add it to the enabled list directly;
-# it starts after the shell restarts.
+# it starts after the shell restarts. The disabled list wins over the enabled one, and turning
+# the extension off in the Extensions app puts it there, so take it out of that list too.
 enabled=$(gsettings get org.gnome.shell enabled-extensions)
 case $enabled in
     *"'$UUID'"*) ;;
     "@as []") gsettings set org.gnome.shell enabled-extensions "['$UUID']" ;;
     *) gsettings set org.gnome.shell enabled-extensions "${enabled%]}, '$UUID']" ;;
+esac
+disabled=$(gsettings get org.gnome.shell disabled-extensions)
+case $disabled in
+    *"'$UUID'"*)
+        gsettings set org.gnome.shell disabled-extensions \
+            "$(echo "$disabled" | sed "s/, '$UUID'//; s/'$UUID', //; s/'$UUID'//")" ;;
 esac
 
 echo "Claudometer is installed in $DEST."
