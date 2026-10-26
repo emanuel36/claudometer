@@ -109,7 +109,6 @@ check('empty range projectStats', projectStats([], at(9, 1), now),
     {total: 0, rows: [], other: null});
 
 // rangeFrom
-const DAY = 86400000;
 check('range today', rangeFrom('today', now, []), at(9, 24, 0));
 check('range 7d', rangeFrom('7d', now, []), at(9, 18, 0));
 check('range 30d', rangeFrom('30d', now, []), at(8, 25, 0));

@@ -32,7 +32,7 @@ const OPEN_TICK_SECONDS = 60;
  * Projects, Activity and Models tabs.
  */
 export const Indicator = GObject.registerClass(
-class Indicator extends PanelMenu.Button {
+class ClaudometerIndicator extends PanelMenu.Button {
     /**
      * Args:
      *     path: The extension's folder.

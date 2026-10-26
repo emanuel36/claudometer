@@ -74,7 +74,9 @@ export function createLimitsView() {
         row.add_child(value);
         const time = cell('', 'cm-sec cm-lt-time');
         row.add_child(time);
-        track.opacity = value.opacity = shown.stale ? STALE_OPACITY : 255;
+        const opacity = shown.stale ? STALE_OPACITY : 255;
+        track.opacity = opacity;
+        value.opacity = opacity;
         table.add_child(row);
         timeCells.push({time, resetsAt});
     };

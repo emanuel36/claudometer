@@ -195,7 +195,9 @@ export class UsageClient {
             if (id)
                 GLib.source_remove(id);
         }
-        this._timerId = this._retryId = this._eventId = null;
+        this._timerId = null;
+        this._retryId = null;
+        this._eventId = null;
         this._networkMonitor.disconnect(this._networkId);
         if (this._credentialsId)
             this._credentialsMonitor.disconnect(this._credentialsId);
