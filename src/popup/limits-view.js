@@ -7,6 +7,8 @@ import {limitTimeText} from '../limits/status.js';
 import {createStateBlock, createVBox} from './widgets.js';
 
 const METER_WIDTH = 56;
+// Matches .cm-meter-fill in stylesheet.css
+const METER_RADIUS = 4;
 // Shown faded while the limits could not be refreshed
 const STALE_OPACITY = 115;
 
@@ -66,8 +68,11 @@ export function createLimitsView() {
         const track = new St.Widget({style_class: 'cm-meter-track',
             y_align: Clutter.ActorAlign.CENTER});
         const clamped = Math.min(100, Math.max(0, percent));
-        track.add_child(new St.Widget({style_class: 'cm-meter-fill',
-            width: Math.round(clamped / 100 * METER_WIDTH)}));
+        const width = Math.round(clamped / 100 * METER_WIDTH);
+        // St draws a radius wider than half the fill square on some rows, so narrow it
+        const style = width < 2 * METER_RADIUS ? `border-radius: ${Math.floor(width / 2)}px;`
+            : null;
+        track.add_child(new St.Widget({style_class: 'cm-meter-fill', width, style}));
         row.add_child(track);
 
         const value = cell(`${Math.round(percent)}%`, 'cm-val cm-lt-percent');
