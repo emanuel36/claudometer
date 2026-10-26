@@ -2,9 +2,9 @@
 import System from 'system';
 
 import {
-    bucketRecords, countAmount, dayStats, formatTokens, hourStats, modelFamily, modelTotals,
-    parseHiddenProjects, periodStats, projectStats, rangeFrom, rangeHeader, rangeStart,
-    selectRecords,
+    bucketRecords, countAmount, dayStats, formatTokens, hourStats, modelFamily, modelIdTotals,
+    modelLabel, modelTotals, parseHiddenProjects, periodStats, projectModelStats, projectStats,
+    rangeFrom, rangeHeader, rangeStart, selectRecords,
 } from '../src/history/stats.js';
 
 let failures = 0;
@@ -178,6 +178,48 @@ check('home itself', projectStats([rec({cwd: '/home/u'})], at(9, 1), now, 5, 'pa
     .rows[0].label, '~');
 check('similar prefix is not home', projectStats([rec({cwd: '/home/user2/x'})], at(9, 1), now, 5,
     'path', '/home/u').rows[0].label, '/home/user2/x');
+
+// Windows folders
+const windows = projectStats([
+    rec({cwd: 'C:\\Users\\u\\dev\\app', out: 10}), rec({cwd: 'C:\\Users\\u\\old\\app', out: 5}),
+    rec({cwd: 'D:\\solo\\', out: 1}),
+], at(9, 1), now);
+check('windows folders are named by their last component', windows.rows.map(r => r.label),
+    ['app (dev)', 'app (old)', 'solo']);
+check('windows path names use ~', projectStats([rec({cwd: 'C:\\Users\\u\\dev\\app'})], at(9, 1),
+    now, 5, 'path', 'C:\\Users\\u').rows[0].label, '~\\dev\\app');
+check('hidden windows project leaves',
+    selectRecords([rec({cwd: 'C:\\w\\scratch'}), rec({cwd: 'C:\\w\\a'})],
+        {count: 'output', hidden: ['scratch']}).map(r => r.cwd), ['C:\\w\\a']);
+
+// modelLabel
+check('label claude', modelLabel('claude-opus-5-5'), 'Opus 5.5');
+check('label drops the date', modelLabel('claude-haiku-4-5-20251001'), 'Haiku 4.5');
+check('label puts the family first', modelLabel('claude-4.5-sonnet-thinking'),
+    'Sonnet 4.5 Thinking');
+check('label cursor effort', modelLabel('claude-sonnet-5-5-high'), 'Sonnet 5.5 High');
+check('label gpt', modelLabel('gpt-5.6-sol-medium'), 'GPT-5.6 Sol Medium');
+check('label grok', modelLabel('grok-4.7-xhigh'), 'Grok 4.7 XHigh');
+check('label family', modelLabel('opus'), 'Opus');
+check('label auto', modelLabel('default'), 'Auto');
+
+// projectModelStats
+const split = projectModelStats([
+    rec({cwd: '/w/a', out: 30}), rec({cwd: '/w/a', out: 10, model: 'gpt-5.6'}),
+    rec({cwd: '/w/b', out: 20, model: 'gpt-5.6'}), rec({cwd: '/w/c', out: 5}),
+], at(9, 1), now, 2);
+check('projects split by model, largest first',
+    split.rows.map(r => [r.label, r.out, r.models.map(m => [m.label, m.out, m.share])]), [
+        ['a', 40, [['Opus 5.5', 30, 0.75], ['GPT-5.6', 10, 0.25]]],
+        ['b', 20, [['GPT-5.6', 20, 1]]],
+    ]);
+check('other projects keep their models', split.other,
+    {out: 5, share: 5 / 65, models: [{model: 'claude-opus-5-5', label: 'Opus 5.5', out: 5,
+        share: 1}]});
+check('model id totals', modelIdTotals([rec({out: 3}), rec({model: 'gpt-5.6', out: 4})],
+    at(9, 1), now).map(m => [m.model, m.out]), [['gpt-5.6', 4], ['claude-opus-5-5', 3]]);
+check('buckets can keep the model id', bucketRecords([rec({model: 'gpt-5.6'})],
+    {keepModel: true})[0].model, 'gpt-5.6');
 
 check('count amount all',
     countAmount(rec({out: 1, input: 2, cacheRead: 3, cacheWrite: 4}), 'all'), 10);
