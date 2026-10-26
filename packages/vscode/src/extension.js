@@ -33,8 +33,8 @@ class Controller {
         this._records = null;
         this._indexing = false;
         this._rebuildPending = false;
-        this._ui = {tab: 'Limits', source: 'all', activityRange: null, listsRange: null,
-            ...context.globalState.get(UI_KEY)};
+        this._ui = {tab: 'Limits', source: 'all', measure: 'tokens', activityRange: null,
+            listsRange: null, ...context.globalState.get(UI_KEY)};
 
         this._statusBar = new StatusBar(this._settings.alignment);
         this._provider = new UsageViewProvider(context.extensionUri,
@@ -201,15 +201,19 @@ class Controller {
         const source = settings.cursor ? this._ui.source : 'claude';
         const activityRange = this._ui.activityRange ?? settings.activityRange;
         const listsRange = this._ui.listsRange ?? settings.listsRange;
+        // Only Cursor's events have a cost, so the switch to it only exists on that source
+        const unit = source === 'cursor' && this._ui.measure === 'cost' ? 'cost' : 'tokens';
         let views = null;
         if (this._records) {
-            const records = chosenRecords(this._records, source,
-                {count: settings.count, hiddenProjects: settings.hiddenProjects});
+            const records = chosenRecords(this._records, source, {
+                count: unit === 'cost' ? 'cost' : settings.count,
+                hiddenProjects: settings.hiddenProjects,
+            });
             views = {
                 projects: projectsView(records, {range: listsRange,
-                    projectNames: settings.projectNames, home: os.homedir(), nowMs: now}),
-                models: modelsView(records, {range: listsRange, nowMs: now}),
-                activity: activityView(records, {range: activityRange, nowMs: now}),
+                    projectNames: settings.projectNames, home: os.homedir(), unit, nowMs: now}),
+                models: modelsView(records, {range: listsRange, unit, nowMs: now}),
+                activity: activityView(records, {range: activityRange, unit, nowMs: now}),
             };
         }
         const tabs = ['Limits', ...settings.tabs.filter(tab => tab !== 'Limits')];
@@ -218,6 +222,8 @@ class Controller {
             tab: tabs.includes(this._ui.tab) ? this._ui.tab : 'Limits',
             sources: settings.cursor ? ['all', 'claude', 'cursor'] : null,
             source,
+            measures: source === 'cursor' ? ['tokens', 'cost'] : null,
+            measure: unit,
             activityRange,
             listsRange,
             limits: {
@@ -250,6 +256,7 @@ class Controller {
             const allowed = {
                 tab: ['Limits', 'Projects', 'Activity', 'Models'],
                 source: ['all', 'claude', 'cursor'],
+                measure: ['tokens', 'cost'],
                 activityRange: RANGES.activity,
                 listsRange: RANGES.lists,
             }[key];

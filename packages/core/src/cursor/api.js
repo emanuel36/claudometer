@@ -55,7 +55,9 @@ async function call(token, pathname, body, fetchImpl) {
 /**
  * Returns:
  *     The plan's usage in the current billing cycle: `{billingCycleStart, billingCycleEnd,
- *     membershipType, isUnlimited, individualUsage: {plan: {used, limit, totalPercentUsed}}}`.
+ *     membershipType, isUnlimited, individualUsage: {plan: {used, limit, totalPercentUsed},
+ *     onDemand: {enabled, used}}}`, the amounts in cents; `onDemand.used` is what was billed
+ *     beyond the plan.
  */
 export function fetchCursorSummary(token, fetchImpl = fetch) {
     return call(token, '/api/usage-summary', null, fetchImpl);
@@ -65,8 +67,9 @@ export function fetchCursorSummary(token, fetchImpl = fetch) {
  * Every usage event between two times: one per model request, with its tokens.
  *
  * Returns:
- *     `[{timestamp, model, conversationId, usageEventId, tokenUsage: {inputTokens,
- *     outputTokens, cacheReadTokens, cacheWriteTokens}}]`.
+ *     `[{timestamp, model, kind, conversationId, usageEventId, tokenUsage: {inputTokens,
+ *     outputTokens, cacheReadTokens, cacheWriteTokens, totalCents}}]`, `totalCents` being the
+ *     cost of the tokens at the model's rates, and `kind` how Cursor billed the event.
  */
 export async function fetchCursorEvents(token, startMs, endMs, fetchImpl = fetch) {
     const events = [];

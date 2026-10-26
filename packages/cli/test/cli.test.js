@@ -7,7 +7,7 @@ import {afterEach, beforeEach, test} from 'node:test';
 import {DEFAULTS} from '@claudometer/core';
 
 import {installStatusLine, statusLineCommand, uninstallStatusLine} from '../src/install.js';
-import {painter, renderLimits, renderProjects} from '../src/render.js';
+import {painter, renderLimits, renderModels, renderProjects} from '../src/render.js';
 import {statusLine} from '../src/statusline.js';
 
 let root;
@@ -48,8 +48,8 @@ test('limits table', () => {
         'Updated just now', {paint: plain, stale: false});
     assert.deepEqual(text.split('\n'), [
         'LIMITS',
-        'LIMIT               USED  LEFT',
-        '5-hour  ████░░░░░░   42%  2h 14m',
+        'LIMIT                USED  LEFT',
+        '5-hour  ████░░░░░░    42%  2h 14m',
         'Updated just now',
     ]);
 });
@@ -60,6 +60,28 @@ test('projects list their models under them', () => {
         models: [{label: 'Opus 5.5', out: 6, share: 0.6}, {label: 'GPT-5.6', out: 4, share: 0.4}],
     }]}, {paint: plain});
     assert.match(text, /^app +100% +10\n {2}Opus 5\.5 +60% +6\n {2}GPT-5\.6 +40% +4$/m);
+});
+
+test('the on-demand row shows dollars and no meter', () => {
+    const text = renderLimits([
+        {name: 'Cursor plan', percent: 20, left: '24d 6h', source: 'cursor'},
+        {name: 'On demand', percent: null, text: '$10.06', left: '24d 6h', source: 'cursor'},
+    ], 'Updated just now', {paint: plain, stale: false});
+    const lines = text.split('\n');
+    assert.match(lines[2], /^Cursor plan +█+░* +20% +24d 6h$/);
+    assert.match(lines[3], /^On demand +\$10\.06 +24d 6h$/);
+});
+
+test('projects and models show dollars when the view is the cost', () => {
+    const project = {label: 'app', out: 1240, share: 1,
+        models: [{label: 'GPT-5.6', out: 1240, share: 1}]};
+    const projects = renderProjects({header: 'LAST 7 DAYS', unit: 'cost', total: 1240,
+        other: null, rows: [project]}, {paint: plain});
+    assert.match(projects, /^PROJECTS · LAST 7 DAYS · \$12\.40 token cost$/m);
+    assert.match(projects, /^app +100% +\$12\.40\n {2}GPT-5\.6 +100% +\$12\.40$/m);
+    const models = renderModels({header: 'TODAY', unit: 'cost', total: 1240,
+        rows: [{label: 'GPT-5.6', out: 1240, share: 1}]}, {paint: plain});
+    assert.match(models, /\$12\.40$/m);
 });
 
 test('the status line reads the cache and asks for a refresh when it is old', async () => {

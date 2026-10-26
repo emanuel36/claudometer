@@ -2,7 +2,7 @@
 import {scopedLimits} from '../../../src/limits/limits.js';
 import {limitTimeText, statusLine, State} from '../../../src/limits/status.js';
 import {
-    FAMILY_NAMES, formatTokens, hourStats, modelFamily, modelIdTotals, periodStats,
+    FAMILY_NAMES, formatCost, formatTokens, hourStats, modelFamily, modelIdTotals, periodStats,
     projectModelStats, rangeFrom, rangeHeader, selectRecords,
 } from '../../../src/history/stats.js';
 import {panelValues} from '../../../src/topbar/panel.js';
@@ -54,6 +54,18 @@ export function cursorPlanUsage(plan) {
 }
 
 /**
+ * Returns:
+ *     What Cursor billed beyond the plan this billing cycle, `{cents, resetsAt}` (`resetsAt`
+ *     is the end of the cycle), or null when on-demand usage is off or there is no summary.
+ */
+export function cursorOnDemand(plan) {
+    const usage = plan?.summary?.individualUsage?.onDemand;
+    if (!usage?.enabled || !Number.isFinite(usage.used))
+        return null;
+    return {cents: usage.used, resetsAt: isoDate(plan.summary.billingCycleEnd)};
+}
+
+/**
  * Rows of the Limits table.
  *
  * Args:
@@ -62,7 +74,8 @@ export function cursorPlanUsage(plan) {
  *     options: `modelLimits`, `resetStyle`, `use24h` and `nowMs`.
  *
  * Returns:
- *     `[{name, percent, left, source}]`, `left` being the reset text.
+ *     `[{name, percent, left, source}]`, `left` being the reset text. The `On demand` row has
+ *     no limit: its `percent` is null and `text` holds the dollars billed this cycle.
  */
 export function limitRows(snapshot, cursorPlan, {modelLimits, resetStyle, use24h = true,
     nowMs = Date.now()}) {
@@ -83,11 +96,16 @@ export function limitRows(snapshot, cursorPlan, {modelLimits, resetStyle, use24h
         }
     }
     const cursor = cursorPlanUsage(cursorPlan);
+    const cycleLeft = resetsAt => resetsAt ? limitTimeText(resetsAt, nowMs,
+        {stale: false, style: resetStyle, use24h}) : '—';
     if (cursor) {
-        rows.push({name: 'Cursor plan', percent: cursor.percent,
-            left: cursor.resetsAt ? limitTimeText(cursor.resetsAt, nowMs,
-                {stale: false, style: resetStyle, use24h}) : '—',
+        rows.push({name: 'Cursor plan', percent: cursor.percent, left: cycleLeft(cursor.resetsAt),
             source: 'cursor'});
+    }
+    const onDemand = cursorOnDemand(cursorPlan);
+    if (onDemand) {
+        rows.push({name: 'On demand', percent: null, text: formatCost(onDemand.cents),
+            left: cycleLeft(onDemand.resetsAt), source: 'cursor'});
     }
     return rows;
 }
@@ -106,46 +124,53 @@ export function statusText(snapshot, nowMs = Date.now(), use24h = true) {
  * Args:
  *     records: Records from `loadRecords`.
  *     source: `claude`, `cursor` or `all`.
- *     options: `count` and `hiddenProjects`.
+ *     options: `count` and `hiddenProjects`. With `count: 'cost'` only Cursor's records are
+ *         used whatever the source, as Claude Code's transcripts have no cost.
  */
 export function chosenRecords(records, source, {count, hiddenProjects}) {
-    const picked = source === 'all' ? records : records.filter(r => r.source === source);
+    const only = count === 'cost' ? 'cursor' : source;
+    const picked = only === 'all' ? records : records.filter(r => r.source === only);
     return selectRecords(picked, {count, hidden: hiddenProjects});
 }
 
 const withShare = (rows, total) => rows.map(row => ({...row, share: total ? row.out / total : 0}));
 
 /**
+ * Every view says what its amounts are in `unit`: `tokens`, or `cost` (cents) when the records
+ * were chosen with `count: 'cost'`; pass it as `unit`.
+ *
  * Returns:
- *     `{header, total, rows: [{cwd, label, out, share, models}], other}` for the Projects tab;
- *     every project lists the tokens of each model it used.
+ *     `{header, unit, total, rows: [{cwd, label, out, share, models}], other}` for the Projects
+ *     tab; every project lists the amount of each model it used.
  */
-export function projectsView(records, {range, projectNames, home, nowMs = Date.now()}) {
+export function projectsView(records, {range, projectNames, home, unit = 'tokens',
+    nowMs = Date.now()}) {
     const from = rangeFrom(range, nowMs, records);
     const stats = projectModelStats(records, from, nowMs, TOP_PROJECTS, projectNames, home);
     return {
         header: rangeHeader(range, from),
+        unit,
         total: stats.total,
         rows: stats.rows.map(row => ({...row, label: row.cwd ? row.label : NO_PROJECT})),
         other: stats.other,
     };
 }
 
-/** Returns: `{header, total, rows: [{model, label, family, out, share}]}` for the Models tab. */
-export function modelsView(records, {range, nowMs = Date.now()}) {
+/** Returns: `{header, unit, total, rows: [{model, label, family, out, share}]}` for Models. */
+export function modelsView(records, {range, unit = 'tokens', nowMs = Date.now()}) {
     const from = rangeFrom(range, nowMs, records);
     const rows = modelIdTotals(records, from, nowMs)
         .map(row => ({...row, family: modelFamily(row.model)}));
     const total = rows.reduce((sum, row) => sum + row.out, 0);
-    return {header: rangeHeader(range, from), total, rows: withShare(rows, total)};
+    return {header: rangeHeader(range, from), unit, total, rows: withShare(rows, total)};
 }
 
 /**
  * Returns:
- *     `{header, total, periods, hours, families}` for the Activity tab: bars per period split
- *     by family, the 24 hours of the day, and the families present, largest first.
+ *     `{header, unit, total, periods, hours, families}` for the Activity tab: bars per period
+ *     split by family, the 24 hours of the day, and the families present, largest first.
  */
-export function activityView(records, {range, nowMs = Date.now()}) {
+export function activityView(records, {range, unit = 'tokens', nowMs = Date.now()}) {
     const from = rangeFrom(range, nowMs, records);
     const periods = periodStats(records, range, nowMs);
     const hours = hourStats(records, from, nowMs);
@@ -158,9 +183,15 @@ export function activityView(records, {range, nowMs = Date.now()}) {
         .map(([family, out]) => ({family, name: FAMILY_NAMES[family], out}));
     return {
         header: rangeHeader(range, from),
+        unit,
         total: periods.reduce((sum, p) => sum + p.total, 0),
         periods, hours, families,
     };
 }
 
-export {formatTokens};
+/** Returns: An amount of a view as text: `1.2M` tokens, or `$12.40` for the `cost` unit. */
+export function formatAmount(amount, unit) {
+    return unit === 'cost' ? formatCost(amount) : formatTokens(amount);
+}
+
+export {formatCost, formatTokens};

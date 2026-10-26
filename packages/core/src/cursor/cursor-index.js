@@ -7,7 +7,8 @@ import {CursorApiError, fetchCursorEvents, fetchCursorSummary} from './api.js';
 import {conversationProjects, openCursorDb, readAccessToken} from './db.js';
 import {readHookProjects} from './hook.js';
 
-const INDEX_VERSION = 1;
+// 2 added the cost of each event; an older index is read again once, to fill in the past
+const INDEX_VERSION = 2;
 const DAY_MS = 86400000;
 // Events of the last day are fetched again, in case some arrived late
 const OVERLAP_MS = DAY_MS;
@@ -33,8 +34,10 @@ export const cursorPlanPath = dataDir => path.join(dataDir, 'cursor-plan.json');
  *     event: One usage event from the dashboard.
  *
  * Returns:
- *     `[id, t, model, out, input, cacheRead, cacheWrite, conversationId]`, or null for an
- *     event without tokens.
+ *     `[id, t, model, out, input, cacheRead, cacheWrite, conversationId, cents]`, or null for
+ *     an event without tokens. `cents` is what the tokens cost at the model's rates, as
+ *     Cursor works it out (`tokenUsage.totalCents`); it also counts tokens the plan or a free
+ *     credit covered. Events Cursor did not charge (errors, aborted requests) cost nothing.
  */
 export function eventRow(event) {
     const t = Number(event?.timestamp);
@@ -45,8 +48,11 @@ export function eventRow(event) {
         return null;
     const model = event.model || 'default';
     const conversation = event.conversationId ?? '';
+    const charged = !String(event.kind ?? '').endsWith('_NOT_CHARGED');
+    const cents = charged && Number.isFinite(usage.totalCents) && usage.totalCents > 0
+        ? usage.totalCents : 0;
     return [event.usageEventId || `${t}|${model}|${conversation}`, t, model, ...amounts,
-        conversation];
+        conversation, cents];
 }
 
 /**
@@ -59,9 +65,9 @@ export function eventRow(event) {
  *     unknown have an empty `cwd`.
  */
 export function eventRecords(rows, projects) {
-    return rows.map(([id, t, model, out, input, cacheRead, cacheWrite, conversation]) => ({
+    return rows.map(([id, t, model, out, input, cacheRead, cacheWrite, conversation, cents]) => ({
         id, t, model, out, input, cacheRead, cacheWrite, cwd: projects.get(conversation) ?? '',
-        branch: '', sidechain: false,
+        branch: '', sidechain: false, ...(cents > 0 ? {cents} : {}),
     }));
 }
 

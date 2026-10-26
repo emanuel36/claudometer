@@ -79,9 +79,11 @@ export function serializeIndex(files, records) {
     return JSON.stringify({
         version: INDEX_VERSION,
         files,
+        // `cents` (what the tokens cost, Cursor only) is an extra last column, left out when
+        // there is none, so a Claude Code index keeps its shape
         records: [...records.values()].map(r => [
             r.id, r.t, r.model, r.out, r.input, r.cacheRead, r.cacheWrite, r.cwd, r.branch,
-            r.sidechain,
+            r.sidechain, ...(r.cents > 0 ? [r.cents] : []),
         ]),
     });
 }
@@ -108,11 +110,12 @@ export function parseIndex(text) {
     for (const row of index.records) {
         if (!Array.isArray(row))
             continue;
-        const [id, t, model, out, input, cacheRead, cacheWrite, cwd, branch, sidechain] = row;
+        const [id, t, model, out, input, cacheRead, cacheWrite, cwd, branch, sidechain,
+            cents] = row;
         if (![t, out, input, cacheRead, cacheWrite].every(Number.isFinite))
             continue;
         records.set(id, {id, t, model, out, input, cacheRead, cacheWrite, cwd, branch,
-            sidechain: sidechain === true});
+            sidechain: sidechain === true, ...(cents > 0 ? {cents} : {})});
     }
     return {files: index.files ?? {}, records};
 }

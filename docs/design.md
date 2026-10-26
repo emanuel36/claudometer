@@ -142,7 +142,9 @@ toggle buttons; on/off options are switches.
   usage and the usage events of every model from `cursor.com`. Each event names its
   conversation, and Cursor's database names the workspace of each conversation, so events land
   in their exact project; Cursor CLI chats do once a Cursor hook notes their workspace. Models
-  keep their exact names, such as `GPT-5.6 Sol Medium` or `Sonnet 4.5 Thinking`.
+  keep their exact names, such as `GPT-5.6 Sol Medium` or `Sonnet 4.5 Thinking`. Each event also
+  carries what its tokens cost at the model's rates, which feeds the cost view; Claude Code's
+  transcripts have no prices, so cost is Cursor only and nothing is estimated.
 - **Shared by the editors and the terminal:** one data dir per user, where a single cache of the
   limits, guarded by a lock and 60 seconds between requests, serves every editor window, the
   CLI and the status line.
@@ -160,7 +162,13 @@ own theme colors, with the accent `#d97757` for meters and the spark.
   Projects, Activity and Models, a source switch (`All · Claude Code · Cursor`) shows when
   Cursor's usage is on.
 - **Limits** adds a `Cursor plan` row, used share of the plan and time to the end of the billing
-  cycle, when Cursor's usage is on.
+  cycle, when Cursor's usage is on. If on-demand usage is enabled, an `On demand` row follows,
+  with the dollars Cursor billed this cycle in place of a meter, and the same time left.
+- **Tokens or cost:** with Cursor as the source, a `Tokens · Cost` switch sits above the range
+  switch of Projects, Activity and Models. Cost shows the same shares, bars and rows in dollars
+  (`$81.43`, `$1.2K`) and says in a note below that it is what the tokens cost at each model's
+  rates, including what the plan or a free credit covered; what was billed is the `On demand`
+  row. `All` and `Claude Code` keep tokens, since Claude Code has no prices.
 - **Projects:** every project row is followed by its models, dim and indented, with their share
   of the project and their tokens; clicking a project folds them.
 - **Models:** one row per exact model, in its family color (GPT, Grok, Gemini, Composer and Auto
@@ -172,7 +180,9 @@ own theme colors, with the accent `#d97757` for meters and the spark.
 
 `claudometer` prints the Limits tab as a table, with a 10-character meter in the accent color;
 `projects`, `models` and `activity` print the other tabs, projects with their models below
-them, and the days as accent bars with the hours as a sparkline. Colors only show on a terminal
+them, and the days as accent bars with the hours as a sparkline. `--count cost` with Cursor's
+usage on prints the same tables in dollars, headed `token cost`; `limits` adds the `On demand`
+row, its dollars in the USED column. Colors only show on a terminal
 that wants them (no `NO_COLOR`, not `dumb`); `--json` prints the data instead.
 
 Claude Code's status line gets one line, from the cache only, so it never waits on the network:

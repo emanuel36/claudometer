@@ -164,6 +164,8 @@ export function bucketRecords(records, {keepModel = false} = {}) {
         bucket.input += record.input;
         bucket.cacheRead += record.cacheRead;
         bucket.cacheWrite += record.cacheWrite;
+        if (record.cents > 0)
+            bucket.cents = (bucket.cents ?? 0) + record.cents;
         buckets.set(id, bucket);
     }
     return [...buckets.values()];
@@ -309,10 +311,13 @@ export function projectModelStats(records, fromMs, toMs, top = 5, names = 'folde
 
 /**
  * Returns:
- *     The record's amount for what is counted: `output`, `output-input` (output + input) or
- *     `all` (also both cache kinds).
+ *     The record's amount for what is counted: `output`, `output-input` (output + input),
+ *     `all` (also both cache kinds) or `cost` (what the tokens cost, in cents; only Cursor's
+ *     events have one).
  */
 export function countAmount(record, count) {
+    if (count === 'cost')
+        return record.cents ?? 0;
     if (count === 'output-input')
         return record.out + record.input;
     if (count === 'all')
@@ -321,15 +326,17 @@ export function countAmount(record, count) {
 }
 
 /**
- * Drops hidden projects (by last folder of `cwd`) and sets `out` to the counted amount.
+ * Drops hidden projects (by last folder of `cwd`) and sets `out` to the counted amount. With
+ * `cost`, records that cost nothing are dropped too, so they don't fill the lists with zeros.
  *
  * Args:
  *     records: Records from transcripts.js; they are not changed.
- *     options: `{count: 'output' | 'output-input' | 'all', hidden: string[]}`.
+ *     options: `{count: 'output' | 'output-input' | 'all' | 'cost', hidden: string[]}`.
  */
 export function selectRecords(records, {count, hidden}) {
-    return records.filter(record => !hidden.includes(lastComponent(record.cwd)))
+    const picked = records.filter(record => !hidden.includes(lastComponent(record.cwd)))
         .map(record => ({...record, out: countAmount(record, count)}));
+    return count === 'cost' ? picked.filter(record => record.out > 0) : picked;
 }
 
 /**
@@ -359,4 +366,23 @@ export function formatTokens(n) {
     if (n >= 1000)
         return `${Math.round(n / 1000)}K`;
     return String(n);
+}
+
+/**
+ * Args:
+ *     cents: An amount in US cents.
+ *
+ * Returns:
+ *     `$0.42`, `$12.40`, `$432`, `$1.2K` or `$12K`: cents below $100, whole dollars below
+ *     $1,000, then thousands.
+ */
+export function formatCost(cents) {
+    const dollars = cents / 100;
+    if (dollars >= 10000)
+        return `$${Math.round(dollars / 1000)}K`;
+    if (dollars >= 1000 || Math.round(dollars) >= 1000)
+        return `$${(dollars / 1000).toFixed(1)}K`;
+    if (dollars >= 100)
+        return `$${Math.round(dollars)}`;
+    return `$${dollars.toFixed(2)}`;
 }

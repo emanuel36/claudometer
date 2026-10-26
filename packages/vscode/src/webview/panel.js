@@ -1,6 +1,6 @@
 // The usage panel's script, bundled for the webview. It only draws the state the extension
 // posts; every name in it comes from the user's folders, so text is set with textContent.
-import {formatTokens} from '../../../../src/history/stats.js';
+import {formatCost, formatTokens} from '../../../../src/history/stats.js';
 
 const vscode = acquireVsCodeApi();
 const ACCENT = '#d97757';
@@ -18,6 +18,9 @@ const ICONS = {
     Settings: '<path fill-rule="evenodd" d="M6.8 1h2.4l.4 1.9 1.3.6 1.6-1.1 1.7 1.7-1.1 1.6.6 1.3 1.9.4v2.4l-1.9.4-.6 1.3 1.1 1.6-1.7 1.7-1.6-1.1-1.3.6-.4 1.9H6.8l-.4-1.9-1.3-.6-1.6 1.1-1.7-1.7 1.1-1.6-.6-1.3L1 9.2V6.8l1.9-.4.6-1.3-1.1-1.6 1.7-1.7 1.6 1.1 1.3-.6zM8 5.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8z"/>',
 };
 const SOURCE_LABELS = {all: 'All', claude: 'Claude Code', cursor: 'Cursor'};
+const MEASURE_LABELS = {tokens: 'Tokens', cost: 'Cost'};
+const COST_NOTE = 'What the tokens cost at each model\'s rates, including what your plan or ' +
+    'a free credit covered. The Limits tab shows what Cursor billed on demand.';
 const RANGE_LABELS = {today: 'Today', '7d': '7d', '30d': '30d', '6m': '6m', all: 'All'};
 const ACTIVITY_RANGES = ['7d', '30d', '6m', 'all'];
 const LIST_RANGES = ['today', '7d', '30d', 'all'];
@@ -56,6 +59,8 @@ function icon(name, size = 16) {
 const select = (key, value) => vscode.postMessage({type: 'select', key, value});
 const command = name => vscode.postMessage({type: 'command', command: name});
 const percent = share => `${Math.round(share * 100)}%`;
+// Amounts of a view are tokens, or cents when the view is the cost
+const amount = (n, unit) => unit === 'cost' ? formatCost(n) : formatTokens(n);
 
 function tabBar(state) {
     const bar = el('div', 'tabs');
@@ -108,9 +113,16 @@ function limitsTab(state) {
     table.append(head);
     for (const row of rows) {
         const line = el('div', `limits-row${row.source === 'cursor' ? ' fresh' : ''}`);
-        line.append(el('span', 'name', row.name), meter(row.percent / 100),
-            el('span', 'val num', `${Math.round(row.percent)}%`),
-            el('span', 'sec num', row.left));
+        if (row.percent === null) {
+            // Dollars billed, with no limit to measure them against
+            const money = el('span', 'val num', row.text);
+            money.style.gridColumn = '2 / 4';
+            line.append(el('span', 'name', row.name), money, el('span', 'sec num', row.left));
+        } else {
+            line.append(el('span', 'name', row.name), meter(row.percent / 100),
+                el('span', 'val num', `${Math.round(row.percent)}%`),
+                el('span', 'sec num', row.left));
+        }
         table.append(line);
     }
     return table;
@@ -129,7 +141,7 @@ function stack(parts) {
     return bar;
 }
 
-function shareRow(color, label, share, out, className = '') {
+function shareRow(color, label, share, out, unit, className = '') {
     const row = el('div', `share-row ${className}`);
     const square = el('span', 'square');
     if (color)
@@ -137,14 +149,14 @@ function shareRow(color, label, share, out, className = '') {
     else
         square.classList.add('none');
     row.append(square, el('span', 'name', label), el('span', 'sec num', percent(share)),
-        el('span', 'val num', formatTokens(out)));
+        el('span', 'val num', amount(out, unit)));
     return row;
 }
 
-function shareHeader(first) {
+function shareHeader(first, unit) {
     const head = el('div', 'share-row hdr');
     head.append(el('span', 'square none'), el('span', 'name', first), el('span', 'num', 'SHARE'),
-        el('span', 'num', 'TOKENS'));
+        el('span', 'num', unit === 'cost' ? 'COST' : 'TOKENS'));
     return head;
 }
 
@@ -153,7 +165,7 @@ function listsHeader(state, view) {
     box.append(switcher(LIST_RANGES, state.listsRange, RANGE_LABELS,
         range => select('listsRange', range)));
     const head = el('div', 'hdr range-head');
-    head.append(el('span', '', view.header), el('span', '', formatTokens(view.total)));
+    head.append(el('span', '', view.header), el('span', '', amount(view.total, view.unit)));
     box.append(head);
     return box;
 }
@@ -172,10 +184,10 @@ function projectsTab(state) {
         : view.rows;
     const colorOf = i => projects[i].cwd === '\0other' ? OTHER_COLOR : PROJECT_COLORS[i];
     box.append(stack(projects.map((row, i) => ({share: row.share, color: colorOf(i)}))));
-    box.append(shareHeader('PROJECT'));
+    box.append(shareHeader('PROJECT', view.unit));
     projects.forEach((row, i) => {
         const open = !folded.has(row.cwd);
-        const line = shareRow(colorOf(i), row.label, row.share, row.out, 'project');
+        const line = shareRow(colorOf(i), row.label, row.share, row.out, view.unit, 'project');
         line.setAttribute('role', 'button');
         line.setAttribute('aria-expanded', String(open));
         line.tabIndex = 0;
@@ -197,7 +209,7 @@ function projectsTab(state) {
         box.append(line);
         if (open) {
             for (const model of row.models)
-                box.append(shareRow(null, model.label, model.share, model.out, 'model'));
+                box.append(shareRow(null, model.label, model.share, model.out, view.unit, 'model'));
         }
     });
     return box;
@@ -214,9 +226,9 @@ function modelsTab(state) {
         return box;
     }
     box.append(stack(view.rows.map(row => ({share: row.share, color: FAMILY_COLORS[row.family]}))));
-    box.append(shareHeader('MODEL'));
+    box.append(shareHeader('MODEL', view.unit));
     for (const row of view.rows)
-        box.append(shareRow(FAMILY_COLORS[row.family], row.label, row.share, row.out));
+        box.append(shareRow(FAMILY_COLORS[row.family], row.label, row.share, row.out, view.unit));
     return box;
 }
 
@@ -228,7 +240,7 @@ function activityTab(state) {
     box.append(switcher(ACTIVITY_RANGES, state.activityRange, RANGE_LABELS,
         range => select('activityRange', range)));
     const head = el('div', 'hdr range-head');
-    head.append(el('span', '', view.header), el('span', '', formatTokens(view.total)));
+    head.append(el('span', '', view.header), el('span', '', amount(view.total, view.unit)));
     box.append(head);
     if (view.total === 0) {
         box.append(screen(SCREENS.empty));
@@ -238,7 +250,7 @@ function activityTab(state) {
     const max = Math.max(...view.periods.map(p => p.total), 1);
     for (const period of view.periods) {
         const column = el('div', 'bar');
-        column.title = `${period.label}: ${formatTokens(period.total)}`;
+        column.title = `${period.label}: ${amount(period.total, view.unit)}`;
         for (const family of view.families) {
             const amount = period.byFamily[family.family] ?? 0;
             if (!amount)
@@ -272,7 +284,7 @@ function activityTab(state) {
         const cell = el('div', 'hour');
         cell.style.backgroundColor = ACCENT;
         cell.style.opacity = String(out ? 0.15 + 0.85 * out / top : 0.06);
-        cell.title = `${hour}h: ${formatTokens(out)}`;
+        cell.title = `${hour}h: ${amount(out, view.unit)}`;
         hours.append(cell);
     });
     box.append(hours);
@@ -306,7 +318,13 @@ function render(state) {
         content.append(switcher(state.sources, state.source, SOURCE_LABELS,
             source => select('source', source)));
     }
+    if (state.measures && state.tab !== 'Limits') {
+        content.append(switcher(state.measures, state.measure, MEASURE_LABELS,
+            measure => select('measure', measure)));
+    }
     content.append(tabs[state.tab](state));
+    if (state.measure === 'cost' && state.tab !== 'Limits')
+        content.append(el('div', 'note sec', COST_NOTE));
     if (state.cursorNote)
         content.append(el('div', 'note sec', state.cursorNote));
     app.replaceChildren(tabBar(state), content, footer(state));

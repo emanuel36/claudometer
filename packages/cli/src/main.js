@@ -39,13 +39,15 @@ Commands:
 Options:
   --range <r>     today, 7d, 30d, 6m or all
   --source <s>    claude, cursor or all (default: all the sources turned on)
-  --count <c>     output, output-input or all (tokens counted)
+  --count <c>     output, output-input or all (tokens counted), or cost: what the tokens cost
+                  in dollars, for Cursor usage only
   --json          Print JSON instead of a table
   -h, --help      Show this help
   -v, --version   Show the version
 `;
 
 const RANGES = ['today', '7d', '30d', '6m', 'all'];
+const COUNTS = ['output', 'output-input', 'all', 'cost'];
 
 function fail(message) {
     process.stderr.write(`claudometer: ${message}\n`);
@@ -189,6 +191,15 @@ async function main() {
         fail('--source must be claude, cursor or all');
     if (source === 'cursor' && !config.cursor)
         fail('Cursor usage is off; turn it on with `claudometer cursor on`');
+    const count = values.count ?? config.count;
+    if (!COUNTS.includes(count))
+        fail(`--count must be one of ${COUNTS.join(', ')}`);
+    // Claude Code's transcripts have no cost, so the cost is Cursor's alone
+    if (count === 'cost' && !config.cursor)
+        fail('--count cost needs Cursor usage; turn it on with `claudometer cursor on`');
+    if (count === 'cost' && source === 'claude')
+        fail('--count cost is for Cursor usage only; Claude Code has no cost to show');
+    const unit = count === 'cost' ? 'cost' : 'tokens';
 
     const first = (await readHistoryState(data)).claude.ms === 0;
     if (first && process.stderr.isTTY)
@@ -208,13 +219,12 @@ async function main() {
         await writeFile(file, exportCsv(picked));
         return void process.stdout.write(`Saved ${file}\n`);
     }
-    const records = chosenRecords(all, source,
-        {count: values.count ?? config.count, hiddenProjects: config.hiddenProjects});
+    const records = chosenRecords(all, source, {count, hiddenProjects: config.hiddenProjects});
     const build = {
         projects: () => projectsView(records, {range, projectNames: config.projectNames,
-            home: os.homedir()}),
-        models: () => modelsView(records, {range}),
-        activity: () => activityView(records, {range}),
+            home: os.homedir(), unit}),
+        models: () => modelsView(records, {range, unit}),
+        activity: () => activityView(records, {range, unit}),
     }[command];
     const view = build();
     if (values.json)
