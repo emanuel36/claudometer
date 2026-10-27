@@ -57,6 +57,27 @@ export function spawnSleep() {
     return Number(child.get_identifier());
 }
 
+/**
+ * Starts `argv` with its standard input and output as pipes, so it never reaches a terminal.
+ *
+ * Args:
+ *     argv: the command and its arguments.
+ *     environment: variables added to the child's environment.
+ *
+ * Returns:
+ *     The `Gio.Subprocess`; it is killed when the test ends.
+ */
+export function spawnPiped(argv, environment = {}) {
+    const launcher = new Gio.SubprocessLauncher({
+        flags: Gio.SubprocessFlags.STDIN_PIPE | Gio.SubprocessFlags.STDOUT_PIPE,
+    });
+    for (const [name, value] of Object.entries(environment))
+        launcher.setenv(name, value, true);
+    const child = launcher.spawnv(argv);
+    children.push(child);
+    return child;
+}
+
 /** Kills a child started by `spawnSleep` and waits until it is reaped. */
 export function killChild(pid) {
     const child = children.find(c => Number(c.get_identifier()) === pid);

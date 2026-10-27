@@ -94,6 +94,20 @@ session() {
         ($button._iconDot.visible || $button._labelDot.visible)")
     echo "sessions: $result"
     [ "$result" = "(true, 'true')" ] || fail=1
+    # A notification that carries a focus token yields its target and never reaches the tray
+    eval_js "globalThis.cmHit = null; const n = Main.messageTray.getSources().length; \
+        globalThis.cmSources = n; $button._book.expect('cm-shell-test', 5000) \
+        .then(x => (globalThis.cmHit = x?.target?.unpack() ?? -1)); true" > /dev/null
+    gdbus call --session --dest org.gtk.Notifications --object-path /org/gtk/Notifications \
+        --method org.gtk.Notifications.AddNotification com.mitchellh.ghostty cm \
+        "{'title': <'Ghostty'>, 'body': <'cm-shell-test'>, \
+        'default-action': <'app.present-surface'>, 'default-action-target': <uint64 42>}" \
+        > /dev/null
+    sleep 1
+    result=$(eval_js "$button._catcher.available && globalThis.cmHit === 42 && \
+        Main.messageTray.getSources().length === globalThis.cmSources")
+    echo "catcher: $result"
+    [ "$result" = "(true, 'true')" ] || fail=1
     eval_js "$button.menu.close(); true" > /dev/null
     for _ in $(seq 20); do
         [ -s "$DATA/usage.json" ] && break

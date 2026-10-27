@@ -2,6 +2,7 @@ import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
+import Meta from 'gi://Meta';
 import St from 'gi://St';
 
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -14,6 +15,8 @@ import {createSessionsView} from './popup/sessions-view.js';
 import {panelMarkup, panelValues, usageColor} from './topbar/panel.js';
 import {createPanelGraphic} from './topbar/panel-graphic.js';
 import {selectRecords} from './history/stats.js';
+import {NotificationCatcher} from './sessions/catcher.js';
+import {SessionFocus, TokenBook} from './sessions/focus.js';
 import {SessionMonitor} from './sessions/monitor.js';
 import {State, limitsScreen, statusLine} from './limits/status.js';
 import {loadSummary} from './history/store.js';
@@ -63,8 +66,12 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._lastIndexMs = 0;
         this._usage = {state: State.FRESH, detail: null, data: null, lastSuccessMs: 0};
         this._dataDir = dataDir;
-        // Null while the sessions setting is off
+        // Null while the sessions setting is off, like the focus tokens, the notification
+        // catcher and the tab focus that live with it
         this._monitor = null;
+        this._book = null;
+        this._catcher = null;
+        this._focus = null;
         // Seen marks from this time on still look fresh: the moment the popup opened
         // on the Status tab, or the moment that tab was picked while the popup was open
         this._freshSinceMs = Infinity;
@@ -177,9 +184,12 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._client.destroy();
         this._createClient();
         this._rebuild();
+        // Only the monitor reads the folder; the focus tokens a click is still waiting for
+        // stay caught
         if (this._monitor) {
-            this._stopSessions();
-            this._applySessions();
+            this._monitor.destroy();
+            this._startMonitor();
+            this._showSessions();
         }
     }
 
@@ -187,19 +197,41 @@ class ClaudometerIndicator extends PanelMenu.Button {
         if (!this._settings.get_boolean('show-sessions')) {
             this._stopSessions();
         } else if (!this._monitor) {
-            this._monitor = new SessionMonitor({
-                dir: GLib.build_filenamev([this._claudeDir(), 'sessions']),
-                statePath: GLib.build_filenamev([this._dataDir, 'sessions.json']),
-                keepMinutes: this._settings.get_int('seen-minutes'),
-                onChange: () => this._showSessions(),
+            this._book = new TokenBook();
+            const catcher = new NotificationCatcher(this._book);
+            this._catcher = catcher;
+            this._focus = new SessionFocus({
+                book: this._book,
+                available: () => catcher.available,
+                x11: typeof Meta.is_wayland_compositor === 'function' &&
+                    !Meta.is_wayland_compositor(),
             });
+            this._startMonitor();
         }
         this._showSessions();
+    }
+
+    _startMonitor() {
+        this._monitor = new SessionMonitor({
+            dir: GLib.build_filenamev([this._claudeDir(), 'sessions']),
+            statePath: GLib.build_filenamev([this._dataDir, 'sessions.json']),
+            keepMinutes: this._settings.get_int('seen-minutes'),
+            onChange: () => {
+                this._focus.forget(this._monitor.sessions);
+                this._showSessions();
+            },
+        });
     }
 
     _stopSessions() {
         this._monitor?.destroy();
         this._monitor = null;
+        this._focus?.destroy();
+        this._focus = null;
+        this._catcher?.destroy();
+        this._catcher = null;
+        this._book?.destroy();
+        this._book = null;
     }
 
     // The section, the dots and the Status tab's badge follow the monitor's listing
@@ -236,10 +268,14 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._tabBar?.setBadge('Status', attention && this._tab !== 'Status');
     }
 
-    // A click on a row: the popup closes and the session counts as handled
+    // A click on a row: the popup closes, the session counts as handled, and its Ghostty tab
+    // comes to the front when it can
     _onSession(sessionId) {
         this.menu.close();
         this._monitor?.handled(sessionId);
+        const session = this._monitor?.sessions.find(s => s.sessionId === sessionId);
+        if (session)
+            this._focus.focus(session);
     }
 
     _gicon(name) {
