@@ -10,9 +10,11 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import {indexGapSeconds, resolveClaudeDir, tabFromSetting} from './prefs/config.js';
 import {runIndexer} from './history/index-runner.js';
 import {createLimitsView} from './popup/limits-view.js';
+import {createSessionsView} from './popup/sessions-view.js';
 import {panelMarkup, panelValues, usageColor} from './topbar/panel.js';
 import {createPanelGraphic} from './topbar/panel-graphic.js';
 import {selectRecords} from './history/stats.js';
+import {SessionMonitor} from './sessions/monitor.js';
 import {State, limitsScreen, statusLine} from './limits/status.js';
 import {loadSummary} from './history/store.js';
 import {UsageClient} from './limits/usage-client.js';
@@ -60,6 +62,13 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._rebuildPending = false;
         this._lastIndexMs = 0;
         this._usage = {state: State.FRESH, detail: null, data: null, lastSuccessMs: 0};
+        this._dataDir = dataDir;
+        // Null while the sessions setting is off
+        this._monitor = null;
+        // Seen marks from this time on still look fresh: the moment the popup opened
+        // on the Status tab, or the moment that tab was picked while the popup was open
+        this._freshSinceMs = Infinity;
+        this._newCount = 0;
 
         const box = new St.BoxLayout({style_class: 'panel-status-menu-box'});
         // A full-color icon, so it keeps its orange instead of following the theme
@@ -68,7 +77,18 @@ class ClaudometerIndicator extends PanelMenu.Button {
                 GLib.build_filenamev([path, 'icons', 'claudometer.svg'])),
             style_class: 'system-status-icon',
         });
-        box.add_child(this._icon);
+        // The dot for sessions that need attention sits on the icon's corner
+        this._iconBox = new St.Widget({layout_manager: new Clutter.BinLayout(),
+            y_align: Clutter.ActorAlign.CENTER});
+        this._iconBox.add_child(this._icon);
+        this._iconDot = new St.Widget({
+            style_class: 'cm-dot cm-panel-dot',
+            x_align: Clutter.ActorAlign.END,
+            y_align: Clutter.ActorAlign.START,
+            visible: false,
+        });
+        this._iconBox.add_child(this._iconDot);
+        box.add_child(this._iconBox);
         this._graphic = createPanelGraphic();
         box.add_child(this._graphic.actor);
         this._label = new St.Label({
@@ -77,6 +97,13 @@ class ClaudometerIndicator extends PanelMenu.Button {
             y_align: Clutter.ActorAlign.CENTER,
         });
         box.add_child(this._label);
+        // Stands in for the icon's dot while the icon is hidden
+        this._labelDot = new St.Widget({
+            style_class: 'cm-dot cm-panel-dot',
+            y_align: Clutter.ActorAlign.CENTER,
+            visible: false,
+        });
+        box.add_child(this._labelDot);
         this.add_child(box);
         this._showPanel();
 
@@ -85,8 +112,12 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._buildPopup();
         this._menuOpenId = this.menu.connect('open-state-changed', (menu, open) => {
             this._stopTick();
-            if (!open)
+            this._freshSinceMs = Infinity;
+            if (!open) {
+                this._showSessions();
                 return;
+            }
+            this._seeSessions();
             this._tick();
             this._tickId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, OPEN_TICK_SECONDS,
                 () => {
@@ -117,6 +148,10 @@ class ClaudometerIndicator extends PanelMenu.Button {
                 this._applyActivityOptions();
             else if (key === 'claude-dir')
                 this._onClaudeDir();
+            else if (key === 'show-sessions')
+                this._applySessions();
+            else if (key === 'seen-minutes')
+                this._monitor?.setKeepMinutes(s.get_int('seen-minutes'));
             else if (key === 'rebuild-request')
                 this._rebuild();
         });
@@ -124,6 +159,7 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._applyActivityOptions();
         this._loadSummary(false);
         this._createClient();
+        this._applySessions();
     }
 
     _createClient() {
@@ -141,6 +177,69 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._client.destroy();
         this._createClient();
         this._rebuild();
+        if (this._monitor) {
+            this._stopSessions();
+            this._applySessions();
+        }
+    }
+
+    _applySessions() {
+        if (!this._settings.get_boolean('show-sessions')) {
+            this._stopSessions();
+        } else if (!this._monitor) {
+            this._monitor = new SessionMonitor({
+                dir: GLib.build_filenamev([this._claudeDir(), 'sessions']),
+                statePath: GLib.build_filenamev([this._dataDir, 'sessions.json']),
+                keepMinutes: this._settings.get_int('seen-minutes'),
+                onChange: () => this._showSessions(),
+            });
+        }
+        this._showSessions();
+    }
+
+    _stopSessions() {
+        this._monitor?.destroy();
+        this._monitor = null;
+    }
+
+    // The section, the dots and the Status tab's badge follow the monitor's listing
+    // (the section only while the popup is open, so a closing popup never changes under the
+    // pointer; the next opening draws it)
+    _showSessions() {
+        if (this._destroyed)
+            return;
+        this._newCount = 0;
+        this._sessionsView.actor.visible = !!this._monitor;
+        if (this._monitor) {
+            const listing = this._monitor.listing(Date.now(), this._freshSinceMs);
+            if (this.menu.isOpen)
+                this._sessionsView.update(listing);
+            this._newCount = listing.newCount;
+        }
+        this._showDots();
+    }
+
+    // Done sessions count as seen only while the Status tab shows them
+    _seeSessions() {
+        if (!this.menu.isOpen || this._tab !== 'Status')
+            return;
+        if (this._freshSinceMs === Infinity)
+            this._freshSinceMs = Date.now();
+        this._monitor?.markSeen();
+    }
+
+    _showDots() {
+        const attention = this._newCount > 0;
+        const showIcon = this._settings.get_boolean('show-icon');
+        this._iconDot.visible = attention && showIcon;
+        this._labelDot.visible = attention && !showIcon;
+        this._tabBar?.setBadge('Status', attention && this._tab !== 'Status');
+    }
+
+    // A click on a row: the popup closes and the session counts as handled
+    _onSession(sessionId) {
+        this.menu.close();
+        this._monitor?.handled(sessionId);
     }
 
     _gicon(name) {
@@ -155,12 +254,17 @@ class ClaudometerIndicator extends PanelMenu.Button {
 
     _buildPopup() {
         this._limitsView = createLimitsView();
+        this._sessionsView = createSessionsView(id => this._onSession(id));
+        this._sessionsView.actor.visible = false;
+        const status = createVBox({x_expand: true});
+        status.add_child(this._limitsView.actor);
+        status.add_child(this._sessionsView.actor);
         this._showLimitsState();
         this._activityView = createActivityView();
         this._projectsView = createProjectsView();
         this._modelsView = createModelsView();
         this._tabViews = {
-            Status: this._limitsView.actor,
+            Status: status,
             Projects: this._projectsView.actor,
             Activity: this._activityView.actor,
             Models: this._modelsView.actor,
@@ -203,6 +307,8 @@ class ClaudometerIndicator extends PanelMenu.Button {
         for (const [tab, view] of Object.entries(this._tabViews))
             view.visible = tab === name;
         this._tabBar.setSelected(name);
+        this._showDots();
+        this._seeSessions();
         if (!remember)
             return;
         this._settings.set_string('last-tab', name);
@@ -239,7 +345,8 @@ class ClaudometerIndicator extends PanelMenu.Button {
         const values = panelValues(data ?? {}, s.get_string('panel-limit'));
         const colors = values.map(v =>
             usageColor(v, s.get_string('panel-color'), s.get_string('color-scale')));
-        this._icon.visible = s.get_boolean('show-icon');
+        this._iconBox.visible = s.get_boolean('show-icon');
+        this._showDots();
         this._graphic.update(style, values, colors);
         let markup = state === State.FRESH ? '…' : '—';
         if (data)
@@ -270,6 +377,7 @@ class ClaudometerIndicator extends PanelMenu.Button {
 
     _tick() {
         this._limitsView.updateTimes(this._usage.data, Date.now(), this._isStale());
+        this._showSessions();
         this._showStatus();
     }
 
@@ -375,6 +483,7 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._destroyed = true;
         this._stopTick();
         this._client.destroy();
+        this._stopSessions();
         this._indexProcess?.force_exit();
         this._indexProcess = null;
         this._cancellable.cancel();

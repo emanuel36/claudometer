@@ -160,6 +160,49 @@
     width: 76px;
 }
 
+/* Sessions */
+.cm-ss-mark {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background-color: #d97757;
+}
+
+.cm-ss-mark-dim {
+    background-color: rgba(255, 255, 255, 0.22);
+}
+
+.cm-ss-time {
+    width: 52px;
+    text-align: right;
+}
+
+.cm-ss-header {
+    padding-top: 12px;
+}
+
+.cm-ss-row:hover .cm-name,
+.cm-ss-row:focus .cm-name {
+    color: #ffffff;
+}
+
+/* A dot on the top bar icon or a tab icon; the border matches the background behind it */
+.cm-dot {
+    width: 7px;
+    height: 7px;
+    /* Half the box once St rounds the 1.5px rings up to 2px */
+    border-radius: 6px;
+    background-color: #d97757;
+}
+
+.cm-panel-dot {
+    border: 1.5px solid #000000;
+}
+
+.cm-tab-dot {
+    border: 1.5px solid #353535;
+}
+
 /* Activity */
 .cm-act-head {
     margin-bottom: 6px;

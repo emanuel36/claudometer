@@ -18,6 +18,17 @@ glib-compile-schemas "$EXT/schemas"
 expires=$(( ($(date +%s) + 86400) * 1000 ))
 printf '{"claudeAiOauth":{"accessToken":"claudometer-test","expiresAt":%s}}\n' "$expires" \
     > "$HOME/.claude/.credentials.json"
+# A live session that waits for input: a process of the container, with its start time
+mkdir -p "$HOME/.claude/sessions"
+sleep 600 &
+sleeper=$!
+now_ms=$(date +%s%3N)
+printf '{"pid":%s,"sessionId":"demo-session","procStart":"%s","kind":"interactive",' \
+    "$sleeper" "$(awk '{print $22}' /proc/$sleeper/stat)" \
+    > "$HOME/.claude/sessions/$sleeper.json"
+printf '"name":"demo","status":"waiting","waitingFor":"input needed","startedAt":%s,' \
+    "$now_ms" >> "$HOME/.claude/sessions/$sleeper.json"
+printf '"statusUpdatedAt":%s}\n' "$now_ms" >> "$HOME/.claude/sessions/$sleeper.json"
 gsettings set org.gnome.shell enabled-extensions "['$UUID']"
 # The metadata lists only the versions already tested
 gsettings set org.gnome.shell disable-extension-version-validation true
@@ -60,6 +71,29 @@ session() {
         [ "$result" = "(true, 'true')" ] || fail=1
         sleep 1
     done
+    # Done sessions count as seen only while the Status tab shows: opened on it, or picked open
+    result=$(eval_js "const b = $button, m = b._monitor; let n = 0; m.markSeen = () => n++; \
+        b.menu.close(); b._selectTab('Projects'); b.menu.open(); \
+        const other = n === 0 && b._freshSinceMs === Infinity; \
+        b._selectTab('Status'); const picked = n === 1 && b._freshSinceMs < Infinity; \
+        b.menu.close(); b._selectTab('Projects'); b._selectTab('Status'); const shut = n === 1; \
+        b.menu.open(); const opened = n === 2; delete m.markSeen; \
+        other && picked && shut && opened")
+    echo "seen: $result"
+    [ "$result" = "(true, 'true')" ] || fail=1
+    # An unchanged listing keeps the rows, and closing the popup leaves them alone
+    result=$(eval_js "const b = $button, v = b._sessionsView, kids = v.actor.get_children(); \
+        b._showSessions(); const kept = v.actor.get_children().every((c, i) => c === kids[i]); \
+        const update = v.update; let calls = 0; v.update = l => (calls++, update(l)); \
+        b.menu.close(); b._showSessions(); v.update = update; \
+        kids.length > 0 && kept && calls === 0")
+    echo "redraw: $result"
+    [ "$result" = "(true, 'true')" ] || fail=1
+    result=$(eval_js "$button._monitor.listing(Date.now()).header === '1 WAITING FOR YOU' && \
+        $button._sessionsView.actor.visible && \
+        ($button._iconDot.visible || $button._labelDot.visible)")
+    echo "sessions: $result"
+    [ "$result" = "(true, 'true')" ] || fail=1
     eval_js "$button.menu.close(); true" > /dev/null
     for _ in $(seq 20); do
         [ -s "$DATA/usage.json" ] && break
@@ -122,5 +156,6 @@ if grep -E 'JS ERROR|JS WARNING|org\.gnome\.Shell\.Extensions.*(CRITICAL|WARNING
     echo 'FAIL: the preferences logged the lines above'
     fail=1
 fi
+kill "$sleeper"
 [ $fail -eq 0 ] && echo 'PASS'
 exit $fail

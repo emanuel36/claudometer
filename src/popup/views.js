@@ -45,20 +45,33 @@ const STACK_RADIUS = 4;
  *     onSelect: Called with the name of the clicked tab.
  *
  * Returns:
- *     `{actor, setSelected(name), setShown(names)}`: the widget, a way to mark another tab as
- *     selected, and a way to hide the tabs not listed.
+ *     `{actor, setSelected(name), setShown(names), setBadge(name, shown)}`: the widget, a way to
+ *     mark another tab as selected, a way to hide the tabs not listed, and a way to show or
+ *     hide the dot on a tab's icon.
  */
 export function createTabBar(tabs, selected, onSelect) {
     const actor = new St.BoxLayout({style_class: 'cm-tabs', x_expand: true});
     const buttons = new Map();
+    const badges = new Map();
     for (const {name, gicon} of tabs) {
         const content = createVBox({x_align: Clutter.ActorAlign.CENTER});
-        content.add_child(new St.Icon({
+        const iconBox = new St.Widget({layout_manager: new Clutter.BinLayout(),
+            x_align: Clutter.ActorAlign.CENTER});
+        iconBox.add_child(new St.Icon({
             gicon,
             icon_size: 16,
             style_class: 'cm-tab-icon',
             x_align: Clutter.ActorAlign.CENTER,
         }));
+        const dot = new St.Widget({
+            style_class: 'cm-dot cm-tab-dot',
+            x_align: Clutter.ActorAlign.END,
+            y_align: Clutter.ActorAlign.START,
+            visible: false,
+        });
+        iconBox.add_child(dot);
+        badges.set(name, dot);
+        content.add_child(iconBox);
         content.add_child(new St.Label({text: name, style_class: 'cm-tab-label',
             x_align: Clutter.ActorAlign.CENTER}));
         const button = new St.Button({
@@ -89,7 +102,12 @@ export function createTabBar(tabs, selected, onSelect) {
         for (const [name, button] of buttons)
             button.visible = names.includes(name);
     };
-    return {actor, setSelected, setShown};
+    const setBadge = (name, shown) => {
+        const dot = badges.get(name);
+        if (dot)
+            dot.visible = shown;
+    };
+    return {actor, setSelected, setShown, setBadge};
 }
 
 /**
