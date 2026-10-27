@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Claudometer · Sessions mockup</title>
+<style>
+:root { --accent: #d97757; --y: #f8e45c; --b: #62a0ea; --g: #57e389; --r: #ed333b; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; min-height: 100vh; color: #fff; overflow-x: hidden;
+  font-family: Ubuntu, Cantarell, 'Noto Sans', 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #3a3f58, #1f2233) fixed;
+}
+
+/* Top bar */
+.topbar {
+  height: 32px; background: #000; position: relative; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 6px;
+  font-size: 14px; font-weight: 700; user-select: none;
+}
+.tb-left, .tb-right { display: flex; align-items: center; height: 100%; }
+.tb-center { position: absolute; left: 50%; transform: translateX(-50%); display: flex;
+  align-items: center; gap: 2px; height: 100%; }
+.tb-btn { height: 26px; display: flex; align-items: center; gap: 5px; padding: 0 10px;
+  border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.tb-btn:hover { background: rgba(255,255,255,.12); }
+.tb-btn.active { background: rgba(255,255,255,.22); }
+.ws { display: flex; gap: 6px; align-items: center; }
+.ws .pill { width: 30px; height: 8px; border-radius: 4px; background: #fff; }
+.ws .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.45); }
+.tb-right svg { width: 16px; height: 16px; fill: #fff; }
+.tb-right .tb-btn { gap: 10px; }
+.gauge { position: relative; display: flex; }
+.gauge.badge::after { content: ''; position: absolute; top: -1px; right: -2px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px #000; }
+.tb-sep { width: 1px; height: 12px; background: rgba(255,255,255,.3); margin: 0 2px; }
+.lights { display: flex; gap: 4px; align-items: center; }
+.lights i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+.pulse { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.tpill { min-width: 18px; height: 16px; padding: 0 5px; border-radius: 8px; font-size: 11px;
+  display: inline-flex; align-items: center; justify-content: center; color: #000; }
+.tpill.y { background: var(--y); } .tpill.g { background: var(--g); }
+.dimtxt { color: rgba(255,255,255,.55); }
+
+/* Popup, copied from stylesheet.css */
+.popup { position: absolute; top: 36px; z-index: 6; background: #353535; border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.08); box-shadow: 0 4px 12px rgba(0,0,0,.45);
+  padding: 10px 12px 9px; }
+.content { width: 244px; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid rgba(255,255,255,.12); margin-bottom: 8px; }
+.tab { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center;
+  padding: 4px 0 3px; color: #a8a8a8; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  cursor: pointer; position: relative; }
+.tab:hover, .tab.sel { color: #fff; }
+.tab.sel { border-bottom-color: #fff; }
+.tab span { font-size: 10px; margin-top: 2px; }
+.tab .tbadge { position: absolute; top: 3px; left: calc(50% + 5px); width: 6px; height: 6px;
+  border-radius: 50%; background: var(--accent); }
+svg.i16 { width: 16px; height: 16px; fill: currentColor; display: block; }
+.hdr { font-size: 9px; font-weight: 600; letter-spacing: 1px; color: #a0a0a0; text-transform: uppercase; }
+.name { font-size: 12px; color: #e6e6e6; }
+.val { font-size: 12px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+.sec { font-size: 12px; color: #a0a0a0; font-variant-numeric: tabular-nums; }
+.small { font-size: 11px; color: #a0a0a0; }
+.r { text-align: right; } .c { text-align: center; }
+.ell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.trow { display: flex; align-items: center; gap: 8px; padding: 10px 0; }
+.hrow { display: flex; align-items: center; gap: 8px; padding-bottom: 2px; }
+.hrow.gap { padding-top: 12px; }
+.tline { height: 1px; background: rgba(255,255,255,.10); }
+.meter { width: 56px; height: 8px; border-radius: 4px; background: rgba(255,255,255,.10); position: relative; }
+.meter i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--accent); }
+.foot { border-top: 1px solid rgba(255,255,255,.10); margin-top: 8px; padding-top: 6px;
+  display: flex; align-items: center; gap: 8px; }
+.foot .st { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 11px; color: #a0a0a0; }
+.foot .st svg { width: 12px; height: 12px; fill: #a0a0a0; }
+.foot-btn { padding: 4px; border-radius: 6px; color: #a8a8a8; display: flex; cursor: pointer; }
+.foot-btn:hover { color: #fff; background: rgba(255,255,255,.08); }
+.foot-btn svg { width: 14px; height: 14px; fill: currentColor; }
+.switch { display: flex; background: rgba(255,255,255,.08); border-radius: 8px; padding: 2px; gap: 2px;
+  margin-bottom: 10px; }
+.switch b { flex: 1; text-align: center; padding: 3px 0; border-radius: 6px; font-size: 12px;
+  color: #b0b0b0; font-weight: 400; cursor: pointer; white-space: nowrap; }
+.switch b.sel { background: rgba(255,255,255,.16); color: #fff; }
+.cropped { display: block; }
+
+/* Session rows */
+.srow { cursor: pointer; }
+.srow:hover .name { color: #fff; text-decoration: underline; text-decoration-color: rgba(255,255,255,.3); }
+.mark { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.mark.acc { background: var(--accent); }
+.mark.hollow { border: 1.5px solid #fff; }
+.mark.solid { background: #fff; }
+.mark.dim { background: rgba(255,255,255,.22); }
+.mark.round { border-radius: 50%; }
+.stack { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.expand { padding: 0 0 10px 16px; }
+.quote { font-size: 11.5px; color: #c8c8c8; line-height: 1.4; border-left: 2px solid rgba(255,255,255,.18);
+  padding: 2px 0 2px 8px; margin-bottom: 8px; }
+.mono { font-family: 'Ubuntu Mono', 'DejaVu Sans Mono', monospace; font-size: 12px; color: #e6e6e6;
+  background: rgba(0,0,0,.28); border-radius: 4px; padding: 3px 6px; display: block; margin-bottom: 8px; }
+.acts { display: flex; gap: 6px; }
+.btn { flex: 1; text-align: center; padding: 4px 0; border-radius: 6px; background: rgba(255,255,255,.08);
+  font-size: 12px; color: #e6e6e6; cursor: pointer; }
+.btn:hover { background: rgba(255,255,255,.16); color: #fff; }
+.btn.pri { background: var(--accent); color: #fff; }
+.btn.pri:hover { background: #e08a6d; }
+.entry { width: 100%; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 6px; color: #fff; font: 12px Ubuntu, Cantarell, sans-serif; padding: 5px 8px; outline: none;
+  margin-bottom: 6px; }
+.entry:focus { border-color: var(--accent); }
+.late { color: var(--y) !important; }
+
+/* Side panels */
+.panel { position: fixed; top: 52px; background: rgba(18,18,22,.86); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px; padding: 16px 18px; font-size: 13px; line-height: 1.5; color: #ddd; z-index: 4; }
+.ctrl { left: 20px; width: 290px; }
+.notes { right: 20px; width: 360px; max-height: calc(100vh - 72px); overflow: auto; }
+.panel h2 { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #a0a0a0; margin: 0 0 8px; }
+.panel h2 + * { margin-top: 0; }
+.opt { padding: 8px 10px; border-radius: 10px; cursor: pointer; margin-bottom: 4px; border: 1px solid transparent; }
+.opt:hover { background: rgba(255,255,255,.06); }
+.opt.sel { background: rgba(217,119,87,.16); border-color: rgba(217,119,87,.5); }
+.opt b { color: #fff; } .opt div { font-size: 12px; color: #a8a8a8; }
+.ctrl .switch { margin: 0 0 12px; }
+.ctrl .btn { display: block; margin-top: 6px; }
+.notes h3 { margin: 0 0 4px; font-size: 16px; color: #fff; }
+.notes .lead { color: #bbb; margin: 0 0 12px; }
+.notes ul { margin: 4px 0 12px; padding-left: 18px; }
+.notes li { margin-bottom: 4px; }
+.tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .5px; padding: 1px 6px;
+  border-radius: 4px; margin-right: 4px; }
+.tag.ok { background: rgba(87,227,137,.18); color: var(--g); }
+.tag.no { background: rgba(237,51,59,.2); color: #ff7b81; }
+.hint { font-size: 11.5px; color: #8a8a8a; margin-top: 10px; }
+
+/* Notification banner and toast */
+.notif { position: fixed; top: 40px; left: 50%; transform: translateX(-50%); width: 400px; z-index: 9;
+  background: #2b2b2f; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.6);
+  border: 1px solid rgba(255,255,255,.08); padding: 12px 14px; }
+.notif .nt { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+.notif .nt svg { width: 32px; height: 32px; flex: none; }
+.notif .title { font-weight: 700; font-size: 13px; }
+.notif .body { font-size: 12.5px; color: #c8c8c8; }
+.toast { position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%); z-index: 10;
+  background: rgba(28,28,30,.96); padding: 10px 18px; border-radius: 999px; font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.5); }
+@media (max-width: 1180px) {
+  .panel { position: static; width: auto; margin: 16px; max-height: none; }
+  .stage { padding-top: 470px; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="tb-left"><div class="tb-btn ws"><span class="pill"></span><span class="dot"></span><span class="dot"></span></div></div>
+  <div class="tb-center" id="center"></div>
+  <div class="tb-right"><div class="tb-btn">
+    <svg viewBox="0 0 16 16"><path d="M8 3c2.6 0 5 1 6.8 2.6l-1.2 1.4A8.3 8.3 0 0 0 8 4.9 8.3 8.3 0 0 0 2.4 7L1.2 5.6A10.2 10.2 0 0 1 8 3zm0 3.8c1.6 0 3.1.6 4.3 1.6L11 9.8a4.6 4.6 0 0 0-6 0L3.7 8.4A6.4 6.4 0 0 1 8 6.8zM8 10.6c.7 0 1.3.3 1.8.7L8 13.4l-1.8-2.1c.5-.4 1.1-.7 1.8-.7z"/></svg>
+    <svg viewBox="0 0 16 16"><path d="M2 6h3l4-3.5v11L5 10H2zM11 5.2a4 4 0 0 1 0 5.6l-1-1a2.6 2.6 0 0 0 0-3.6zm1.8-1.8a6.6 6.6 0 0 1 0 9.2l-1-1a5.2 5.2 0 0 0 0-7.2z"/></svg>
+    <svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M6 1.5h4V3h1.5a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1H6zM5 4.5v9h6v-9z"/><rect x="5.8" y="7" width="4.4" height="5.8"/></svg>
+  </div></div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="panel ctrl">
+  <h2>Opção</h2>
+  <div id="opts"></div>
+  <div id="aNames"><h2 style="margin-top:12px">Nome da aba (A)</h2><div class="switch" id="aSwitch"></div></div>
+  <h2 style="margin-top:12px">Cenário</h2>
+  <div class="switch" id="scen"></div>
+  <div class="btn" data-a="notify" id="notifyBtn">Simular notificação</div>
+  <div class="btn" data-a="reset">Recomeçar</div>
+  <div class="hint">Dados inventados. Clique no indicador da top bar para abrir e fechar o popup;
+    clique nas seções para agir sobre elas.</div>
+</div>
+<div class="panel notes" id="notes"></div>
+<div id="notif"></div>
+<div id="toast"></div>
+
+<script>
+const SVGS = {"Projects": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"244\" height=\"248\" viewBox=\"108 97 244 248\" font-family=\"Ubuntu, Cantarell, 'Noto Sans', 'Segoe UI', sans-serif\">\n<defs><filter id=\"shadow\" x=\"-10%\" y=\"-10%\" width=\"120%\" height=\"130%\"><feDropShadow dx=\"0\" dy=\"4\" stdDeviation=\"6\" flood-opacity=\"0.45\"/></filter></defs>\n<rect x=\"84\" y=\"28\" width=\"292\" height=\"377\" rx=\"12\" fill=\"#1b1b1d\"/>\n<rect x=\"96\" y=\"40\" width=\"268\" height=\"353\" rx=\"14\" fill=\"#353535\" stroke=\"rgba(255,255,255,0.08)\" filter=\"url(#shadow)\"/>\n<g transform=\"translate(130.5 50)\" fill=\"#a8a8a8\"><path d=\"M1.5 11a6.5 6.5 0 0 1 13 0h-2a4.5 4.5 0 0 0-9 0z\"/><rect x=\"7.4\" y=\"5.6\" width=\"1.2\" height=\"6\" rx=\"0.6\" transform=\"rotate(40 8 11)\"/><circle cx=\"8\" cy=\"11\" r=\"1.4\"/></g><text x=\"138.5\" y=\"80\" font-size=\"10\" fill=\"#a8a8a8\" text-anchor=\"middle\">Limits</text>\n<g transform=\"translate(191.5 50)\" fill=\"#fff\"><path d=\"M2.5 3h3.8l1.6 1.6h5.6a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z\"/></g><text x=\"199.5\" y=\"80\" font-size=\"10\" fill=\"#fff\" text-anchor=\"middle\">Projects</text>\n<rect x=\"170.0\" y=\"86\" width=\"59.0\" height=\"2\" fill=\"#fff\"/>\n<g transform=\"translate(252.5 50)\" fill=\"#a8a8a8\"><rect x=\"2\" y=\"8\" width=\"3\" height=\"6\" rx=\"1\"/><rect x=\"6.5\" y=\"3\" width=\"3\" height=\"11\" rx=\"1\"/><rect x=\"11\" y=\"6\" width=\"3\" height=\"8\" rx=\"1\"/></g><text x=\"260.5\" y=\"80\" font-size=\"10\" fill=\"#a8a8a8\" text-anchor=\"middle\">Activity</text>\n<g transform=\"translate(313.5 50)\" fill=\"#a8a8a8\"><path fill-rule=\"evenodd\" d=\"M4.5 3.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM6 6v4h4V6z\"/><rect x=\"5.5\" y=\"1\" width=\"1.2\" height=\"2\"/><rect x=\"9.3\" y=\"1\" width=\"1.2\" height=\"2\"/><rect x=\"5.5\" y=\"13\" width=\"1.2\" height=\"2\"/><rect x=\"9.3\" y=\"13\" width=\"1.2\" height=\"2\"/><rect x=\"1\" y=\"5.5\" width=\"2\" height=\"1.2\"/><rect x=\"1\" y=\"9.3\" width=\"2\" height=\"1.2\"/><rect x=\"13\" y=\"5.5\" width=\"2\" height=\"1.2\"/><rect x=\"13\" y=\"9.3\" width=\"2\" height=\"1.2\"/></g><text x=\"321.5\" y=\"80\" font-size=\"10\" fill=\"#a8a8a8\" text-anchor=\"middle\">Models</text>\n<rect x=\"108\" y=\"88\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.12)\"/>\n<rect x=\"108\" y=\"98\" width=\"244\" height=\"24\" rx=\"8\" fill=\"rgba(255,255,255,0.08)\"/>\n<text x=\"139.2\" y=\"114\" font-size=\"12\" fill=\"#b0b0b0\" text-anchor=\"middle\">Today</text>\n<rect x=\"170.5\" y=\"100\" width=\"58.5\" height=\"20\" rx=\"6\" fill=\"rgba(255,255,255,0.16)\"/>\n<text x=\"199.8\" y=\"114\" font-size=\"12\" fill=\"#fff\" text-anchor=\"middle\">7d</text>\n<text x=\"260.2\" y=\"114\" font-size=\"12\" fill=\"#b0b0b0\" text-anchor=\"middle\">30d</text>\n<text x=\"320.8\" y=\"114\" font-size=\"12\" fill=\"#b0b0b0\" text-anchor=\"middle\">All</text>\n<path d=\"M112 134 H198 A0 0 0 0 1 198 134 V142 A0 0 0 0 1 198 142 H112 A4 4 0 0 1 108 138 V138 A4 4 0 0 1 112 134 Z\" fill=\"#d97757\"/>\n<path d=\"M200 134 H257 A0 0 0 0 1 257 134 V142 A0 0 0 0 1 257 142 H200 A0 0 0 0 1 200 142 V134 A0 0 0 0 1 200 134 Z\" fill=\"#e59a80\"/>\n<path d=\"M259 134 H294 A0 0 0 0 1 294 134 V142 A0 0 0 0 1 294 142 H259 A0 0 0 0 1 259 142 V134 A0 0 0 0 1 259 134 Z\" fill=\"#f0bea9\"/>\n<path d=\"M296 134 H317 A0 0 0 0 1 317 134 V142 A0 0 0 0 1 317 142 H296 A0 0 0 0 1 296 142 V134 A0 0 0 0 1 296 134 Z\" fill=\"#9a9a9a\"/>\n<path d=\"M319 134 H348 A4 4 0 0 1 352 138 V138 A4 4 0 0 1 348 142 H319 A0 0 0 0 1 319 142 V134 A0 0 0 0 1 319 134 Z\" fill=\"#4a4a4a\"/>\n<text x=\"124\" y=\"159\" font-size=\"9\" font-weight=\"600\" fill=\"#a0a0a0\" letter-spacing=\"1\">PROJECT</text>\n<text x=\"300\" y=\"159\" font-size=\"9\" font-weight=\"600\" fill=\"#a0a0a0\" text-anchor=\"end\" letter-spacing=\"1\">SHARE</text>\n<text x=\"352\" y=\"159\" font-size=\"9\" font-weight=\"600\" fill=\"#a0a0a0\" text-anchor=\"end\" letter-spacing=\"1\">TOKENS</text>\n<rect x=\"108\" y=\"176\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#d97757\"/>\n<text x=\"124\" y=\"185\" font-size=\"12\" fill=\"#e6e6e6\">web-shop</text>\n<text x=\"300\" y=\"185\" font-size=\"12\" font-weight=\"700\" fill=\"#fff\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">38%</text>\n<text x=\"352\" y=\"185\" font-size=\"12\" fill=\"#a0a0a0\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">1.3M</text>\n<rect x=\"108\" y=\"199\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.10)\"/>\n<rect x=\"108\" y=\"213\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#e59a80\"/>\n<text x=\"124\" y=\"222\" font-size=\"12\" fill=\"#e6e6e6\">api-gateway</text>\n<text x=\"300\" y=\"222\" font-size=\"12\" font-weight=\"700\" fill=\"#fff\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">24%</text>\n<text x=\"352\" y=\"222\" font-size=\"12\" fill=\"#a0a0a0\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">816K</text>\n<rect x=\"108\" y=\"236\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.10)\"/>\n<rect x=\"108\" y=\"250\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#f0bea9\"/>\n<text x=\"124\" y=\"259\" font-size=\"12\" fill=\"#e6e6e6\">dotfiles</text>\n<text x=\"300\" y=\"259\" font-size=\"12\" font-weight=\"700\" fill=\"#fff\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">15%</text>\n<text x=\"352\" y=\"259\" font-size=\"12\" fill=\"#a0a0a0\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">510K</text>\n<rect x=\"108\" y=\"273\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.10)\"/>\n<rect x=\"108\" y=\"287\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#9a9a9a\"/>\n<text x=\"124\" y=\"296\" font-size=\"12\" fill=\"#e6e6e6\">blog</text>\n<text x=\"300\" y=\"296\" font-size=\"12\" font-weight=\"700\" fill=\"#fff\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">9%</text>\n<text x=\"352\" y=\"296\" font-size=\"12\" fill=\"#a0a0a0\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">306K</text>\n<rect x=\"108\" y=\"310\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.10)\"/>\n<rect x=\"108\" y=\"324\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#4a4a4a\"/>\n<text x=\"124\" y=\"333\" font-size=\"12\" fill=\"#e6e6e6\">Other</text>\n<text x=\"300\" y=\"333\" font-size=\"12\" font-weight=\"700\" fill=\"#fff\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">14%</text>\n<text x=\"352\" y=\"333\" font-size=\"12\" fill=\"#a0a0a0\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">476K</text>\n<rect x=\"108\" y=\"353\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.10)\"/>\n<g transform=\"translate(108 365) scale(0.75)\" fill=\"#a0a0a0\"><path d=\"M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm-1 9.4L4.2 8.1l1.1-1.1L7 8.7l3.7-3.7 1.1 1.1z\"/></g>\n<text x=\"126\" y=\"375\" font-size=\"11\" fill=\"#a0a0a0\">Updated 2 min ago</text>\n<g transform=\"translate(334 364) scale(0.875)\" fill=\"#a8a8a8\"><path fill-rule=\"evenodd\" d=\"M6.8 1h2.4l.4 1.9 1.3.6 1.6-1.1 1.7 1.7-1.1 1.6.6 1.3 1.9.4v2.4l-1.9.4-.6 1.3 1.1 1.6-1.7 1.7-1.6-1.1-1.3.6-.4 1.9H6.8l-.4-1.9-1.3-.6-1.6 1.1-1.7-1.7 1.1-1.6-.6-1.3L1 9.2V6.8l1.9-.4.6-1.3-1.1-1.6 1.7-1.7 1.6 1.1 1.3-.6zM8 5.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8z\"/></g>\n</svg>", "Activity": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"244\" height=\"221\" viewBox=\"108 97 244 221\" font-family=\"Ubuntu, Cantarell, 'Noto Sans', 'Segoe UI', sans-serif\">\n<defs><filter id=\"shadow\" x=\"-10%\" y=\"-10%\" width=\"120%\" height=\"130%\"><feDropShadow dx=\"0\" dy=\"4\" stdDeviation=\"6\" flood-opacity=\"0.45\"/></filter></defs>\n<rect x=\"84\" y=\"28\" width=\"292\" height=\"350\" rx=\"12\" fill=\"#1b1b1d\"/>\n<rect x=\"96\" y=\"40\" width=\"268\" height=\"326\" rx=\"14\" fill=\"#353535\" stroke=\"rgba(255,255,255,0.08)\" filter=\"url(#shadow)\"/>\n<g transform=\"translate(130.5 50)\" fill=\"#a8a8a8\"><path d=\"M1.5 11a6.5 6.5 0 0 1 13 0h-2a4.5 4.5 0 0 0-9 0z\"/><rect x=\"7.4\" y=\"5.6\" width=\"1.2\" height=\"6\" rx=\"0.6\" transform=\"rotate(40 8 11)\"/><circle cx=\"8\" cy=\"11\" r=\"1.4\"/></g><text x=\"138.5\" y=\"80\" font-size=\"10\" fill=\"#a8a8a8\" text-anchor=\"middle\">Limits</text>\n<g transform=\"translate(191.5 50)\" fill=\"#a8a8a8\"><path d=\"M2.5 3h3.8l1.6 1.6h5.6a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z\"/></g><text x=\"199.5\" y=\"80\" font-size=\"10\" fill=\"#a8a8a8\" text-anchor=\"middle\">Projects</text>\n<g transform=\"translate(252.5 50)\" fill=\"#fff\"><rect x=\"2\" y=\"8\" width=\"3\" height=\"6\" rx=\"1\"/><rect x=\"6.5\" y=\"3\" width=\"3\" height=\"11\" rx=\"1\"/><rect x=\"11\" y=\"6\" width=\"3\" height=\"8\" rx=\"1\"/></g><text x=\"260.5\" y=\"80\" font-size=\"10\" fill=\"#fff\" text-anchor=\"middle\">Activity</text>\n<rect x=\"231.0\" y=\"86\" width=\"59.0\" height=\"2\" fill=\"#fff\"/>\n<g transform=\"translate(313.5 50)\" fill=\"#a8a8a8\"><path fill-rule=\"evenodd\" d=\"M4.5 3.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM6 6v4h4V6z\"/><rect x=\"5.5\" y=\"1\" width=\"1.2\" height=\"2\"/><rect x=\"9.3\" y=\"1\" width=\"1.2\" height=\"2\"/><rect x=\"5.5\" y=\"13\" width=\"1.2\" height=\"2\"/><rect x=\"9.3\" y=\"13\" width=\"1.2\" height=\"2\"/><rect x=\"1\" y=\"5.5\" width=\"2\" height=\"1.2\"/><rect x=\"1\" y=\"9.3\" width=\"2\" height=\"1.2\"/><rect x=\"13\" y=\"5.5\" width=\"2\" height=\"1.2\"/><rect x=\"13\" y=\"9.3\" width=\"2\" height=\"1.2\"/></g><text x=\"321.5\" y=\"80\" font-size=\"10\" fill=\"#a8a8a8\" text-anchor=\"middle\">Models</text>\n<rect x=\"108\" y=\"88\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.12)\"/>\n<rect x=\"108\" y=\"98\" width=\"244\" height=\"24\" rx=\"8\" fill=\"rgba(255,255,255,0.08)\"/>\n<rect x=\"110.0\" y=\"100\" width=\"58.5\" height=\"20\" rx=\"6\" fill=\"rgba(255,255,255,0.16)\"/>\n<text x=\"139.2\" y=\"114\" font-size=\"12\" fill=\"#fff\" text-anchor=\"middle\">7d</text>\n<text x=\"199.8\" y=\"114\" font-size=\"12\" fill=\"#b0b0b0\" text-anchor=\"middle\">30d</text>\n<text x=\"260.2\" y=\"114\" font-size=\"12\" fill=\"#b0b0b0\" text-anchor=\"middle\">6m</text>\n<text x=\"320.8\" y=\"114\" font-size=\"12\" fill=\"#b0b0b0\" text-anchor=\"middle\">All</text>\n<text x=\"108\" y=\"142\" font-size=\"9\" font-weight=\"600\" fill=\"#a0a0a0\" letter-spacing=\"1\">LAST 7 DAYS</text>\n<text x=\"352\" y=\"142\" font-size=\"12\" font-weight=\"700\" fill=\"#fff\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">3.4M</text>\n<rect x=\"108.0\" y=\"197.0\" width=\"30.6\" height=\"29.0\" fill=\"#c98500\"/>\n<rect x=\"108.0\" y=\"194.6\" width=\"30.6\" height=\"2.4\" fill=\"#3987e5\"/>\n<text x=\"123.3\" y=\"238\" font-size=\"9\" fill=\"#8a8a8a\" text-anchor=\"middle\">T</text>\n<rect x=\"143.6\" y=\"184.9\" width=\"30.6\" height=\"41.1\" fill=\"#c98500\"/>\n<rect x=\"143.6\" y=\"183.7\" width=\"30.6\" height=\"1.2\" fill=\"#3987e5\"/>\n<rect x=\"143.6\" y=\"183.5\" width=\"30.6\" height=\"0.3\" fill=\"#d55181\"/>\n<text x=\"158.9\" y=\"238\" font-size=\"9\" fill=\"#8a8a8a\" text-anchor=\"middle\">F</text>\n<rect x=\"179.1\" y=\"174.3\" width=\"30.6\" height=\"51.7\" fill=\"#c98500\"/>\n<rect x=\"179.1\" y=\"166.1\" width=\"30.6\" height=\"8.2\" fill=\"#3987e5\"/>\n<text x=\"194.4\" y=\"238\" font-size=\"9\" fill=\"#8a8a8a\" text-anchor=\"middle\">S</text>\n<rect x=\"214.7\" y=\"188.8\" width=\"30.6\" height=\"37.2\" fill=\"#c98500\"/>\n<rect x=\"214.7\" y=\"188.6\" width=\"30.6\" height=\"0.2\" fill=\"#3987e5\"/>\n<rect x=\"214.7\" y=\"188.5\" width=\"30.6\" height=\"0.1\" fill=\"#d55181\"/>\n<text x=\"230.0\" y=\"238\" font-size=\"9\" fill=\"#8a8a8a\" text-anchor=\"middle\">S</text>\n<rect x=\"250.3\" y=\"164.1\" width=\"30.6\" height=\"61.9\" fill=\"#c98500\"/>\n<rect x=\"250.3\" y=\"159.3\" width=\"30.6\" height=\"4.8\" fill=\"#3987e5\"/>\n<text x=\"265.6\" y=\"238\" font-size=\"9\" fill=\"#8a8a8a\" text-anchor=\"middle\">M</text>\n<rect x=\"285.9\" y=\"211.5\" width=\"30.6\" height=\"14.5\" fill=\"#c98500\"/>\n<rect x=\"285.9\" y=\"211.4\" width=\"30.6\" height=\"0.1\" fill=\"#3987e5\"/>\n<text x=\"301.1\" y=\"238\" font-size=\"9\" fill=\"#8a8a8a\" text-anchor=\"middle\">T</text>\n<rect x=\"321.4\" y=\"181.5\" width=\"30.6\" height=\"44.5\" fill=\"#c98500\"/>\n<rect x=\"321.4\" y=\"154.4\" width=\"30.6\" height=\"27.1\" fill=\"#3987e5\"/>\n<rect x=\"321.4\" y=\"150.0\" width=\"30.6\" height=\"4.4\" fill=\"#d55181\"/>\n<text x=\"336.7\" y=\"238\" font-size=\"9\" fill=\"#8a8a8a\" text-anchor=\"middle\">W</text>\n<rect x=\"108\" y=\"226\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.12)\"/>\n<rect x=\"108\" y=\"249\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#c98500\"/>\n<text x=\"122\" y=\"258\" font-size=\"12\" fill=\"#a0a0a0\">Opus</text>\n<rect x=\"161.2\" y=\"249\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#3987e5\"/>\n<text x=\"175.2\" y=\"258\" font-size=\"12\" fill=\"#a0a0a0\">Sonnet</text>\n<rect x=\"228.0\" y=\"249\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#d55181\"/>\n<text x=\"242.0\" y=\"258\" font-size=\"12\" fill=\"#a0a0a0\">Fable</text>\n<text x=\"108\" y=\"280\" font-size=\"9\" font-weight=\"600\" fill=\"#a0a0a0\" letter-spacing=\"1\">WHEN YOU WORK</text>\n<rect x=\"108.0\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.17\"/>\n<rect x=\"118.2\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.16\"/>\n<rect x=\"128.5\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.18\"/>\n<rect x=\"138.8\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.16\"/>\n<rect x=\"149.0\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.16\"/>\n<rect x=\"159.2\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.18\"/>\n<rect x=\"169.5\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.23\"/>\n<rect x=\"179.8\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.22\"/>\n<rect x=\"190.0\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.22\"/>\n<rect x=\"200.2\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.51\"/>\n<rect x=\"210.5\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.64\"/>\n<rect x=\"220.8\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.54\"/>\n<rect x=\"231.0\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.49\"/>\n<rect x=\"241.2\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.46\"/>\n<rect x=\"251.5\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.51\"/>\n<rect x=\"261.8\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.80\"/>\n<rect x=\"272.0\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.76\"/>\n<rect x=\"282.2\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.75\"/>\n<rect x=\"292.5\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.74\"/>\n<rect x=\"302.8\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.17\"/>\n<rect x=\"313.0\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.18\"/>\n<rect x=\"323.2\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.20\"/>\n<rect x=\"333.5\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.21\"/>\n<rect x=\"343.8\" y=\"288\" width=\"8.25\" height=\"16\" fill=\"#fff\" opacity=\"0.22\"/>\n<text x=\"108.0\" y=\"316\" font-size=\"9\" fill=\"#8a8a8a\">0h</text>\n<text x=\"169.5\" y=\"316\" font-size=\"9\" fill=\"#8a8a8a\">6h</text>\n<text x=\"231.0\" y=\"316\" font-size=\"9\" fill=\"#8a8a8a\">12h</text>\n<text x=\"292.5\" y=\"316\" font-size=\"9\" fill=\"#8a8a8a\">18h</text>\n<rect x=\"108\" y=\"326\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.10)\"/>\n<g transform=\"translate(108 338) scale(0.75)\" fill=\"#a0a0a0\"><path d=\"M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm-1 9.4L4.2 8.1l1.1-1.1L7 8.7l3.7-3.7 1.1 1.1z\"/></g>\n<text x=\"126\" y=\"348\" font-size=\"11\" fill=\"#a0a0a0\">Updated 2 min ago</text>\n<g transform=\"translate(334 337) scale(0.875)\" fill=\"#a8a8a8\"><path fill-rule=\"evenodd\" d=\"M6.8 1h2.4l.4 1.9 1.3.6 1.6-1.1 1.7 1.7-1.1 1.6.6 1.3 1.9.4v2.4l-1.9.4-.6 1.3 1.1 1.6-1.7 1.7-1.6-1.1-1.3.6-.4 1.9H6.8l-.4-1.9-1.3-.6-1.6 1.1-1.7-1.7 1.1-1.6-.6-1.3L1 9.2V6.8l1.9-.4.6-1.3-1.1-1.6 1.7-1.7 1.6 1.1 1.3-.6zM8 5.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8z\"/></g>\n</svg>", "Models": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"244\" height=\"174\" viewBox=\"108 97 244 174\" font-family=\"Ubuntu, Cantarell, 'Noto Sans', 'Segoe UI', sans-serif\">\n<defs><filter id=\"shadow\" x=\"-10%\" y=\"-10%\" width=\"120%\" height=\"130%\"><feDropShadow dx=\"0\" dy=\"4\" stdDeviation=\"6\" flood-opacity=\"0.45\"/></filter></defs>\n<rect x=\"84\" y=\"28\" width=\"292\" height=\"303\" rx=\"12\" fill=\"#1b1b1d\"/>\n<rect x=\"96\" y=\"40\" width=\"268\" height=\"279\" rx=\"14\" fill=\"#353535\" stroke=\"rgba(255,255,255,0.08)\" filter=\"url(#shadow)\"/>\n<g transform=\"translate(130.5 50)\" fill=\"#a8a8a8\"><path d=\"M1.5 11a6.5 6.5 0 0 1 13 0h-2a4.5 4.5 0 0 0-9 0z\"/><rect x=\"7.4\" y=\"5.6\" width=\"1.2\" height=\"6\" rx=\"0.6\" transform=\"rotate(40 8 11)\"/><circle cx=\"8\" cy=\"11\" r=\"1.4\"/></g><text x=\"138.5\" y=\"80\" font-size=\"10\" fill=\"#a8a8a8\" text-anchor=\"middle\">Limits</text>\n<g transform=\"translate(191.5 50)\" fill=\"#a8a8a8\"><path d=\"M2.5 3h3.8l1.6 1.6h5.6a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z\"/></g><text x=\"199.5\" y=\"80\" font-size=\"10\" fill=\"#a8a8a8\" text-anchor=\"middle\">Projects</text>\n<g transform=\"translate(252.5 50)\" fill=\"#a8a8a8\"><rect x=\"2\" y=\"8\" width=\"3\" height=\"6\" rx=\"1\"/><rect x=\"6.5\" y=\"3\" width=\"3\" height=\"11\" rx=\"1\"/><rect x=\"11\" y=\"6\" width=\"3\" height=\"8\" rx=\"1\"/></g><text x=\"260.5\" y=\"80\" font-size=\"10\" fill=\"#a8a8a8\" text-anchor=\"middle\">Activity</text>\n<g transform=\"translate(313.5 50)\" fill=\"#fff\"><path fill-rule=\"evenodd\" d=\"M4.5 3.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM6 6v4h4V6z\"/><rect x=\"5.5\" y=\"1\" width=\"1.2\" height=\"2\"/><rect x=\"9.3\" y=\"1\" width=\"1.2\" height=\"2\"/><rect x=\"5.5\" y=\"13\" width=\"1.2\" height=\"2\"/><rect x=\"9.3\" y=\"13\" width=\"1.2\" height=\"2\"/><rect x=\"1\" y=\"5.5\" width=\"2\" height=\"1.2\"/><rect x=\"1\" y=\"9.3\" width=\"2\" height=\"1.2\"/><rect x=\"13\" y=\"5.5\" width=\"2\" height=\"1.2\"/><rect x=\"13\" y=\"9.3\" width=\"2\" height=\"1.2\"/></g><text x=\"321.5\" y=\"80\" font-size=\"10\" fill=\"#fff\" text-anchor=\"middle\">Models</text>\n<rect x=\"292.0\" y=\"86\" width=\"59.0\" height=\"2\" fill=\"#fff\"/>\n<rect x=\"108\" y=\"88\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.12)\"/>\n<rect x=\"108\" y=\"98\" width=\"244\" height=\"24\" rx=\"8\" fill=\"rgba(255,255,255,0.08)\"/>\n<text x=\"139.2\" y=\"114\" font-size=\"12\" fill=\"#b0b0b0\" text-anchor=\"middle\">Today</text>\n<rect x=\"170.5\" y=\"100\" width=\"58.5\" height=\"20\" rx=\"6\" fill=\"rgba(255,255,255,0.16)\"/>\n<text x=\"199.8\" y=\"114\" font-size=\"12\" fill=\"#fff\" text-anchor=\"middle\">7d</text>\n<text x=\"260.2\" y=\"114\" font-size=\"12\" fill=\"#b0b0b0\" text-anchor=\"middle\">30d</text>\n<text x=\"320.8\" y=\"114\" font-size=\"12\" fill=\"#b0b0b0\" text-anchor=\"middle\">All</text>\n<path d=\"M112 134 H312 A0 0 0 0 1 312 134 V142 A0 0 0 0 1 312 142 H112 A4 4 0 0 1 108 138 V138 A4 4 0 0 1 112 134 Z\" fill=\"#c98500\"/>\n<path d=\"M314 134 H346 A0 0 0 0 1 346 134 V142 A0 0 0 0 1 346 142 H314 A0 0 0 0 1 314 142 V134 A0 0 0 0 1 314 134 Z\" fill=\"#3987e5\"/>\n<path d=\"M348 134 H350 A2 2 0 0 1 352 136 V140 A2 2 0 0 1 350 142 H348 A0 0 0 0 1 348 142 V134 A0 0 0 0 1 348 134 Z\" fill=\"#d55181\"/>\n<text x=\"124\" y=\"159\" font-size=\"9\" font-weight=\"600\" fill=\"#a0a0a0\" letter-spacing=\"1\">MODEL</text>\n<text x=\"300\" y=\"159\" font-size=\"9\" font-weight=\"600\" fill=\"#a0a0a0\" text-anchor=\"end\" letter-spacing=\"1\">SHARE</text>\n<text x=\"352\" y=\"159\" font-size=\"9\" font-weight=\"600\" fill=\"#a0a0a0\" text-anchor=\"end\" letter-spacing=\"1\">TOKENS</text>\n<rect x=\"108\" y=\"176\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#c98500\"/>\n<text x=\"124\" y=\"185\" font-size=\"12\" fill=\"#e6e6e6\">Opus</text>\n<text x=\"300\" y=\"185\" font-size=\"12\" font-weight=\"700\" fill=\"#fff\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">85%</text>\n<text x=\"352\" y=\"185\" font-size=\"12\" fill=\"#a0a0a0\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">2.9M</text>\n<rect x=\"108\" y=\"199\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.10)\"/>\n<rect x=\"108\" y=\"213\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#3987e5\"/>\n<text x=\"124\" y=\"222\" font-size=\"12\" fill=\"#e6e6e6\">Sonnet</text>\n<text x=\"300\" y=\"222\" font-size=\"12\" font-weight=\"700\" fill=\"#fff\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">13%</text>\n<text x=\"352\" y=\"222\" font-size=\"12\" fill=\"#a0a0a0\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">455K</text>\n<rect x=\"108\" y=\"236\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.10)\"/>\n<rect x=\"108\" y=\"250\" width=\"8\" height=\"8\" rx=\"2\" fill=\"#d55181\"/>\n<text x=\"124\" y=\"259\" font-size=\"12\" fill=\"#e6e6e6\">Fable</text>\n<text x=\"300\" y=\"259\" font-size=\"12\" font-weight=\"700\" fill=\"#fff\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">1%</text>\n<text x=\"352\" y=\"259\" font-size=\"12\" fill=\"#a0a0a0\" text-anchor=\"end\" style=\"font-feature-settings:'tnum'\">50K</text>\n<rect x=\"108\" y=\"279\" width=\"244\" height=\"1\" fill=\"rgba(255,255,255,0.10)\"/>\n<g transform=\"translate(108 291) scale(0.75)\" fill=\"#a0a0a0\"><path d=\"M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm-1 9.4L4.2 8.1l1.1-1.1L7 8.7l3.7-3.7 1.1 1.1z\"/></g>\n<text x=\"126\" y=\"301\" font-size=\"11\" fill=\"#a0a0a0\">Updated 2 min ago</text>\n<g transform=\"translate(334 290) scale(0.875)\" fill=\"#a8a8a8\"><path fill-rule=\"evenodd\" d=\"M6.8 1h2.4l.4 1.9 1.3.6 1.6-1.1 1.7 1.7-1.1 1.6.6 1.3 1.9.4v2.4l-1.9.4-.6 1.3 1.1 1.6-1.7 1.7-1.6-1.1-1.3.6-.4 1.9H6.8l-.4-1.9-1.3-.6-1.6 1.1-1.7-1.7 1.1-1.6-.6-1.3L1 9.2V6.8l1.9-.4.6-1.3-1.1-1.6 1.7-1.7 1.6 1.1 1.3-.6zM8 5.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8z\"/></g>\n</svg>"};
+
+const P = {
+  Limits: '<path d="M1.5 11a6.5 6.5 0 0 1 13 0h-2a4.5 4.5 0 0 0-9 0z"/><rect x="7.4" y="5.6" width="1.2" height="6" rx="0.6" transform="rotate(40 8 11)"/><circle cx="8" cy="11" r="1.4"/>',
+  Projects: '<path d="M2.5 3h3.8l1.6 1.6h5.6a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>',
+  Activity: '<rect x="2" y="8" width="3" height="6" rx="1"/><rect x="6.5" y="3" width="3" height="11" rx="1"/><rect x="11" y="6" width="3" height="8" rx="1"/>',
+  Models: '<path fill-rule="evenodd" d="M4.5 3.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM6 6v4h4V6z"/><rect x="5.5" y="1" width="1.2" height="2" rx="0.5"/><rect x="9.3" y="1" width="1.2" height="2" rx="0.5"/><rect x="5.5" y="13" width="1.2" height="2" rx="0.5"/><rect x="9.3" y="13" width="1.2" height="2" rx="0.5"/><rect x="1" y="5.5" width="2" height="1.2" rx="0.5"/><rect x="1" y="9.3" width="2" height="1.2" rx="0.5"/><rect x="13" y="5.5" width="2" height="1.2" rx="0.5"/><rect x="13" y="9.3" width="2" height="1.2" rx="0.5"/>',
+  Sessions: '<path fill-rule="evenodd" d="M2.5 2.5h11a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM3 4.5V12h10V4.5z"/><path d="M4.3 6.4l.9-.9 2.6 2.6-2.6 2.6-.9-.9 1.7-1.7z"/><rect x="8.4" y="9.7" width="3.6" height="1.3" rx=".5"/>',
+  Status: '<circle cx="3" cy="3.5" r="1.6"/><rect x="6" y="2.7" width="8.5" height="1.6" rx=".8"/><circle cx="3" cy="8" r="1.6"/><rect x="6" y="7.2" width="6" height="1.6" rx=".8"/><circle cx="3" cy="12.5" r="1.6"/><rect x="6" y="11.7" width="7.5" height="1.6" rx=".8"/>',
+  Now: '<path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zm0 1.8a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4z"/><rect x="7.3" y="4.4" width="1.4" height="4.3" rx=".6"/><rect x="7.3" y="7.3" width="3.4" height="1.4" rx=".6"/>',
+  Live: '<path d="M1 8.5h3l1.6-4 2.8 7.5 2-5 1.1 1.5H15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>',
+  Overview: '<rect x="1.5" y="1.5" width="5.5" height="7" rx="1.3"/><rect x="9" y="1.5" width="5.5" height="4" rx="1.3"/><rect x="1.5" y="10.5" width="5.5" height="4" rx="1.3"/><rect x="9" y="7.5" width="5.5" height="7" rx="1.3"/>',
+  gear: '<path fill-rule="evenodd" d="M6.8 1h2.4l.4 1.9 1.3.6 1.6-1.1 1.7 1.7-1.1 1.6.6 1.3 1.9.4v2.4l-1.9.4-.6 1.3 1.1 1.6-1.7 1.7-1.6-1.1-1.3.6-.4 1.9H6.8l-.4-1.9-1.3-.6-1.6 1.1-1.7-1.7 1.1-1.6-.6-1.3L1 9.2V6.8l1.9-.4.6-1.3-1.1-1.6 1.7-1.7 1.6 1.1 1.3-.6zM8 5.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8z"/>',
+  check: '<path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm-1 9.4L4.2 8.1l1.1-1.1L7 8.7l3.7-3.7 1.1 1.1z"/>',
+  key: '<path fill-rule="evenodd" d="M2 4h12a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v1.3h1.3V6zm2.5 0v1.3h1.3V6zm2.5 0v1.3h1.3V6zm2.5 0v1.3h1.3V6zM5 8.7V10h6V8.7z"/>',
+};
+const ico = (name, cls = 'i16') => `<svg viewBox="0 0 16 16" class="${cls}">${P[name]}</svg>`;
+const GAUGE = '<svg viewBox="0 0 16 16" width="16" height="16"><g fill="none" stroke="#d97757" stroke-width="1.6" stroke-linecap="round"><path d="M2.6 11.6A6 6 0 1 1 13.4 11.6"/><path d="M8 9.2 11.1 5.4"/></g><circle cx="8" cy="9.2" r="1.2" fill="#d97757"/></svg>';
+
+const BASE = [
+  {id: 'k265', name: 'vehicle-k265', path: '~/workspace/vehicle.k265', state: 'needs', kind: 'permission',
+   detail: 'Bash: adb shell reboot', cmd: 'adb shell reboot', since: 4,
+   last: 'The new SPI driver is installed. I need to reboot the device to load it.'},
+  {id: 'jobs', name: 'ai-job-search', path: '~/projects/ai-job-search', state: 'needs', kind: 'question',
+   detail: 'Move the 12 drafts to archive/?', since: 1,
+   last: 'Found 12 drafts older than 30 days. Should I move them to archive/?'},
+  {id: 'cm', name: 'claudometer', path: '~/projects/claudometer', state: 'working', detail: 'Running the shell tests',
+   since: 6, last: 'Running the tests on GNOME 46…'},
+  {id: 'iot', name: 'iot-gateway', path: '~/workspace/iot-gateway', state: 'working', detail: 'Editing 4 files',
+   since: 22, last: 'Refactoring the MQTT client to reconnect with backoff…'},
+  {id: 'dot', name: 'dotfiles', path: '~/dotfiles', state: 'done', unseen: true, detail: 'Updated the zsh prompt',
+   since: 3, last: 'Updated the zsh prompt and reloaded tmux. Open a new shell to see it.'},
+  {id: 'port', name: 'k265-port', path: '~/workspace/k265-port', state: 'error', unseen: true,
+   detail: 'API error 529 · overloaded', since: 12, last: 'API Error: 529 Overloaded.'},
+  {id: 'dl', name: 'downloads', path: '~/Downloads', state: 'idle', detail: 'Waiting for a prompt', since: 58,
+   last: 'The report is in ~/Downloads/report.pdf.'},
+];
+
+function scenario(n) {
+  const list = JSON.parse(JSON.stringify(BASE));
+  const by = id => list.find(s => s.id === id);
+  if (n === 'working') {
+    Object.assign(by('k265'), {state: 'working', detail: 'Flashing the device', since: 2});
+    Object.assign(by('jobs'), {state: 'done', unseen: true, detail: 'Moved 12 drafts', since: 1,
+      last: 'Moved the 12 drafts to archive/.'});
+    Object.assign(by('port'), {state: 'working', unseen: false, detail: 'Retrying the build', since: 5});
+  } else if (n === 'quiet') {
+    for (const s of list) {
+      if (s.state === 'needs' || s.state === 'error') Object.assign(s, {state: 'idle', detail: 'Waiting for a prompt'});
+      if (s.state === 'working') Object.assign(s, {state: 'done', detail: 'Finished'});
+      s.unseen = false;
+    }
+  }
+  return list;
+}
+
+const OPTIONS = {
+  A: {title: 'A · Seção no Limits', short: 'Mínima: um ponto no ícone e uma seção na aba Limits.',
+      tabs: ['Limits', 'Projects', 'Activity', 'Models']},
+  B: {title: 'B · Aba Sessions', short: 'Uma aba nova, calma, com uma única cor.',
+      tabs: ['Limits', 'Sessions', 'Projects', 'Activity', 'Models']},
+  C: {title: 'C · Luzes na barra', short: 'Uma luz colorida por seção e ações no popup.',
+      tabs: ['Sessions', 'Limits', 'Projects', 'Activity', 'Models']},
+  D: {title: 'D · Indicador próprio', short: 'Segundo botão na barra, com responder, notificação e atalho.',
+      tabs: ['Limits', 'Projects', 'Activity', 'Models']},
+};
+
+const NOTES = {
+  A: `<h3>A · Seção no Limits</h3>
+    <p class="lead">A menor mudança possível. Continuam 4 abas; a primeira ganha uma seção
+    <b>SESSIONS</b> no fim, só com as seções que esperam você e um resumo das demais.</p>
+    <b>Nome e ícone da primeira aba</b><ul>
+    <li><b>Status</b>: lista com marcadores; o estado de tudo num lugar.</li>
+    <li><b>Now</b>: relógio; o que está acontecendo agora.</li>
+    <li><b>Live</b>: linha de pulso; dados ao vivo.</li>
+    <li><b>Overview</b>: painel 2×2; visão geral.</li></ul>
+    <p class="lead">A aba ganha um ponto laranja quando algo espera você e ela não está aberta.</p>
+    <b>Top bar</b><ul><li>Ícone e porcentagem iguais; um ponto laranja no medidor quando alguma seção espera você.</li></ul>
+    <b>Popup</b><ul><li>Clicar numa seção traz a janela do Ghostty dela para a frente e marca como vista.</li>
+    <li>Estados por texto (Permission, Question, Done, Error), sem cores novas.</li></ul>
+    <b>Regras do Claudometer</b><ul>
+    <li><span class="tag ok">MANTÉM</span>Calma: sem notificação, uma cor só.</li>
+    <li><span class="tag ok">MANTÉM</span>Privacidade: não lê conversas.</li>
+    <li><span class="tag ok">MANTÉM</span>Sem hooks: só lê <code>~/.claude/sessions</code>.</li>
+    <li><span class="tag no">MUDA</span>A primeira aba deixa de ser só limites, por isso o nome novo.</li></ul>
+    <b>Limitação</b><ul><li>Distinguir permissão de pergunta depende do campo <code>waitingFor</code>, que ainda não verifiquei.</li>
+    <li>Sem ações: só leva você ao terminal.</li></ul>`,
+  B: `<h3>B · Aba Sessions</h3>
+    <p class="lead">Uma quinta aba, no mesmo visual das outras, com as seções agrupadas em
+    <b>NEEDS YOU</b>, <b>WORKING</b> e <b>FINISHED</b>. Pode ser escondida nas configurações, como Projects.</p>
+    <b>Top bar</b><ul><li>Depois da porcentagem, ícone de terminal e a contagem em laranja, só quando algo espera você
+    (pedido, pergunta, ou trabalho concluído que você ainda não viu). Some quando não há nada.</li></ul>
+    <b>Popup</b><ul><li>Aba ganha um ponto laranja quando algo espera você.</li>
+    <li>Marcadores na cor de destaque: cheio = espera você, vazado = trabalhando, cinza = visto.</li>
+    <li>Clicar traz o Ghostty para a frente e marca como visto.</li></ul>
+    <b>Regras do Claudometer</b><ul>
+    <li><span class="tag ok">MANTÉM</span>Calma e uma cor só.</li>
+    <li><span class="tag ok">MANTÉM</span>Privacidade e sem hooks.</li>
+    <li><span class="tag no">MUDA</span>O indicador deixa de mostrar só o uso do plano.</li>
+    <li><span class="tag no">MUDA</span>5 abas ficam mais estreitas (47px cada).</li></ul>`,
+  C: `<h3>C · Luzes na barra</h3>
+    <p class="lead">Uma luz por seção ao lado da porcentagem:
+    <span style="color:var(--y)">amarelo</span> espera você,
+    <span style="color:var(--b)">azul</span> trabalhando,
+    <span style="color:var(--g)">verde</span> concluído,
+    <span style="color:#ff7b81">vermelho</span> erro, cinza ocioso. Amarelo pisca.</p>
+    <b>Popup</b><ul><li>Sessions vira a primeira aba, e o popup abre nela sempre que algo espera você.</li>
+    <li>Clicar numa seção expande: a última mensagem do Claude e os botões <b>Allow / Deny / Open</b>.</li></ul>
+    <b>Regras do Claudometer</b><ul>
+    <li><span class="tag no">QUEBRA</span>Uma cor só: entram quatro cores de estado.</li>
+    <li><span class="tag no">QUEBRA</span>Privacidade: lê a última mensagem (poderia ser opcional).</li>
+    <li><span class="tag no">QUEBRA</span>Allow/Deny exigem hooks no <code>~/.claude/settings.json</code>.</li>
+    <li><span class="tag ok">MANTÉM</span>Sem notificações.</li></ul>
+    <b>Atenção</b><ul><li>A barra cresce com o número de seções: 7 seções = 7 luzes.</li></ul>`,
+  D: `<h3>D · Indicador próprio</h3>
+    <p class="lead">O Claudometer passa a ter dois botões na barra. O medidor e o popup dele ficam
+    exatamente como hoje; o segundo botão é só das seções, com seu próprio popup no mesmo visual.</p>
+    <b>Top bar</b><ul><li>Ícone de terminal com contagem amarela (espera você) e verde (concluído não visto).
+    Sem nada pendente, mostra quantas estão trabalhando, apagado.</li></ul>
+    <b>Popup</b><ul><li>Filtro <b>Needs you / Working / Done</b>.</li>
+    <li>Responder uma pergunta direto no popup; Allow/Deny para permissões.</li>
+    <li>O tempo de espera fica amarelo após 3 min.</li>
+    <li>Atalho global <b>Super+J</b> pula para a próxima seção que espera você.</li></ul>
+    <b>Notificação</b><ul><li>Banner do GNOME com ações quando uma seção começa a esperar.
+    Use “Simular notificação”.</li></ul>
+    <b>Regras do Claudometer</b><ul>
+    <li><span class="tag ok">MANTÉM</span>O indicador e o popup de limites intactos.</li>
+    <li><span class="tag no">QUEBRA</span>Calma (notificações), privacidade e sem hooks.</li></ul>
+    <b>Atenção</b><ul><li>Na prática é uma extensão separada morando no mesmo pacote.</li></ul>`,
+};
+
+const A_NAMES = ['Status', 'Now', 'Live', 'Overview'];
+const tabsFor = opt => opt === 'A' ? [S.aName, ...OPTIONS.A.tabs.slice(1)] : OPTIONS[opt].tabs;
+
+const S = {opt: 'A', aName: 'Status', scen: 'needs', open: 'main', exp: null, filter: 'needs',
+  tab: {A: 'Limits', B: 'Sessions', C: 'Sessions', D: 'Limits'}, list: scenario('needs')};
+
+const esc = t => t.replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const fmt = m => m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`;
+const needs = () => S.list.filter(s => s.state === 'needs');
+const attention = s => s.state === 'needs' || ((s.state === 'done' || s.state === 'error') && s.unseen);
+const RANK = s => s.state === 'needs' ? 0 : attention(s) ? (s.state === 'error' ? 1 : 2) :
+  s.state === 'working' ? 3 : s.state === 'idle' ? 6 : 5;
+const sorted = () => [...S.list].sort((a, b) => RANK(a) - RANK(b) || a.since - b.since);
+const stateLabel = s => s.state === 'needs' ? (s.kind === 'permission' ? 'Permission' : 'Question') :
+  {working: 'Working', done: 'Done', error: 'Error', idle: 'Idle'}[s.state];
+const timeLabel = s => (s.state === 'done' || s.state === 'error' || s.state === 'idle')
+  ? `${fmt(s.since)} ago` : fmt(s.since);
+const lightColor = s => ({needs: 'var(--y)', working: 'var(--b)',
+  done: s.unseen ? 'var(--g)' : 'rgba(87,227,137,.35)', error: s.unseen ? 'var(--r)' : 'rgba(237,51,59,.45)',
+  idle: 'rgba(255,255,255,.3)'}[s.state]);
+
+/* Top bar */
+function topbar() {
+  const n = S.list.filter(attention).length;
+  const gauge = (badge) => `<span class="gauge${badge ? ' badge' : ''}">${GAUGE}</span>`;
+  const pct = '<span style="color:#de8668">42%</span>';
+  const act = k => S.open === k ? ' active' : '';
+  let html = '<div class="tb-btn">Tue 27 Oct&nbsp; 09:41</div>';
+  if (S.opt === 'A') {
+    html += `<div class="tb-btn${act('main')}" data-pop="main">${gauge(n > 0)}${pct}</div>`;
+  } else if (S.opt === 'B') {
+    const extra = n ? `<span class="tb-sep"></span>${ico('Sessions')}<span style="color:var(--accent)">${n}</span>` : '';
+    html += `<div class="tb-btn${act('main')}" data-pop="main">${gauge(false)}${pct}${extra}</div>`;
+  } else if (S.opt === 'C') {
+    const dots = sorted().map(s => `<i class="${s.state === 'needs' ? 'pulse' : ''}" style="background:${lightColor(s)}"></i>`).join('');
+    html += `<div class="tb-btn${act('main')}" data-pop="main">${gauge(false)}${pct}<span class="lights">${dots}</span></div>`;
+  } else {
+    const nd = needs().length;
+    const dn = S.list.filter(s => attention(s) && s.state !== 'needs').length;
+    const wk = S.list.filter(s => s.state === 'working').length;
+    let tail = '';
+    if (nd) tail += `<span class="tpill y">${nd}</span>`;
+    if (dn) tail += `<span class="tpill g">${dn}</span>`;
+    if (!nd && !dn) tail = `<span class="dimtxt">${wk}</span>`;
+    html += `<div class="tb-btn${act('main')}" data-pop="main">${gauge(false)}${pct}</div>` +
+      `<div class="tb-btn${act('sess')}" data-pop="sess">${ico('Sessions')}${tail}</div>`;
+  }
+  document.getElementById('center').innerHTML = html;
+}
+
+/* Popup pieces */
+function footer(text, icon = 'check') {
+  return `<div class="foot"><div class="st"><svg viewBox="0 0 16 16">${P[icon]}</svg>${text}</div>` +
+    `<div class="foot-btn" data-a="toast" data-msg="Abriria as configurações do Claudometer">${ico('gear', '')}</div></div>`;
+}
+
+function limits() {
+  const row = (name, pct, left) => `<div class="trow"><span class="name" style="width:74px">${name}</span>` +
+    `<span class="meter"><i style="width:${Math.max(8, 56 * pct / 100)}px"></i></span>` +
+    `<span class="val r" style="width:36px">${pct}%</span><span class="sec c" style="width:54px">${left}</span></div>`;
+  return `<div class="hrow"><span class="hdr" style="width:74px">Limit</span><span style="width:56px"></span>` +
+    `<span class="hdr r" style="width:36px">Used</span><span class="hdr c" style="width:54px">Left</span></div>` +
+    row('5-hour', 42, '2h 14m') + '<div class="tline"></div>' + row('Weekly', 18, '3d 5h');
+}
+
+/* A: section at the end of Limits */
+function sectionA() {
+  const att = sorted().filter(attention);
+  const rest = S.list.filter(s => !attention(s));
+  const wk = rest.filter(s => s.state === 'working').length;
+  const idle = rest.length - wk;
+  let h = '<div class="tline"></div><div class="hrow gap"><span class="hdr" style="flex:1">Sessions</span>' +
+    `<span class="hdr">${att.length ? att.length + ' waiting for you' : 'nothing waiting'}</span></div>`;
+  att.forEach((s, i) => {
+    h += (i ? '<div class="tline"></div>' : '') +
+      `<div class="trow srow" data-a="open" data-id="${s.id}"><span class="mark ${s.state === 'needs' ? 'acc' : 'solid'}"></span>` +
+      `<span class="name ell" style="flex:1">${s.name}</span><span class="sec">${stateLabel(s)}</span>` +
+      `<span class="val r" style="width:52px">${timeLabel(s).replace(' ago', '')}</span></div>`;
+  });
+  h += `<div class="tline"></div><div class="trow"><span class="sec" style="flex:1">${wk} working · ${idle} idle</span></div>`;
+  return h;
+}
+
+/* B: calm tab, one color */
+function sessionsB() {
+  const groups = [
+    ['Needs you', s => s.state === 'needs'],
+    ['Working', s => s.state === 'working'],
+    ['Finished', s => ['done', 'error', 'idle'].includes(s.state)],
+  ];
+  let h = '';
+  groups.forEach(([title, f], gi) => {
+    const items = sorted().filter(f);
+    if (!items.length) return;
+    h += `<div class="hrow${gi && h ? ' gap' : ''}"><span class="hdr" style="flex:1">${title}</span><span class="hdr">${items.length}</span></div>`;
+    items.forEach((s, i) => {
+      const mk = s.state === 'needs' ? 'acc' : s.state === 'working' ? 'hollow' : attention(s) ? 'solid' : 'dim';
+      h += (i ? '<div class="tline"></div>' : '') +
+        `<div class="trow srow" data-a="open" data-id="${s.id}"><span class="mark ${mk}"></span>` +
+        `<span class="name ell" style="flex:1">${s.name}</span>` +
+        `<span class="sec r" style="width:70px">${stateLabel(s)}</span>` +
+        `<span class="${s.state === 'needs' ? 'val' : 'sec'} r" style="width:44px">${fmt(s.since)}</span></div>`;
+    });
+  });
+  return h;
+}
+
+/* C: lights, expandable rows with actions */
+function actions(s, withReply) {
+  if (s.state === 'needs' && s.kind === 'permission')
+    return `<div class="acts"><div class="btn pri" data-a="allow" data-id="${s.id}">Allow</div>` +
+      `<div class="btn" data-a="deny" data-id="${s.id}">Deny</div><div class="btn" data-a="open" data-id="${s.id}">Open</div></div>`;
+  if (s.state === 'needs' && withReply)
+    return `<input class="entry" data-id="${s.id}" placeholder="Reply to Claude… (Enter)">` +
+      `<div class="acts"><div class="btn" data-a="open" data-id="${s.id}">Open terminal</div></div>`;
+  return `<div class="acts"><div class="btn" data-a="open" data-id="${s.id}">Open terminal</div></div>`;
+}
+
+function sessionsC() {
+  return sorted().map((s, i) => {
+    const open = S.exp === s.id;
+    let h = (i ? '<div class="tline"></div>' : '') +
+      `<div class="trow srow" data-a="expand" data-id="${s.id}">` +
+      `<span class="mark round ${s.state === 'needs' ? 'pulse' : ''}" style="background:${lightColor(s)}"></span>` +
+      `<span class="stack"><span class="name ell">${s.name}</span><span class="small ell">${stateLabel(s)} · ${esc(s.detail)}</span></span>` +
+      `<span class="${s.state === 'needs' ? 'val' : 'sec'} r" style="width:52px">${timeLabel(s).replace(' ago', '')}</span></div>`;
+    if (open) h += `<div class="expand"><div class="quote">${esc(s.last)}</div>${actions(s, false)}</div>`;
+    return h;
+  }).join('');
+}
+
+/* D: own popup */
+function sessPopupD() {
+  const sets = {
+    needs: S.list.filter(s => s.state === 'needs'),
+    working: S.list.filter(s => s.state === 'working'),
+    done: S.list.filter(s => ['done', 'error', 'idle'].includes(s.state)),
+  };
+  const sw = [['needs', 'Needs you'], ['working', 'Working'], ['done', 'Done']].map(([k, l]) =>
+    `<b class="${S.filter === k ? 'sel' : ''}" data-a="filter" data-f="${k}">${l} ${sets[k].length}</b>`).join('');
+  const items = sorted().filter(s => sets[S.filter].includes(s));
+  let body = items.map((s, i) => {
+    const late = s.state === 'needs' && s.since >= 3;
+    let h = (i ? '<div class="tline"></div>' : '') +
+      `<div class="trow srow" data-a="${s.state === 'needs' ? 'noop' : 'open'}" data-id="${s.id}">` +
+      `<span class="mark round" style="background:${lightColor(s)}"></span>` +
+      `<span class="stack"><span class="name ell">${s.name}</span>` +
+      (s.state === 'needs' ? '' : `<span class="small ell">${esc(s.detail)}</span>`) + '</span>' +
+      `<span class="${late ? 'val late' : s.state === 'needs' ? 'val' : 'sec'} r" style="width:52px">${timeLabel(s).replace(' ago', '')}</span></div>`;
+    if (s.state === 'needs') {
+      h += '<div class="expand">' + (s.kind === 'permission'
+        ? `<span class="mono">$ ${esc(s.cmd)}</span>` : `<div class="quote">${esc(s.detail)}</div>`) +
+        actions(s, true) + '</div>';
+    }
+    return h;
+  }).join('');
+  if (!items.length) body = `<div style="text-align:center;padding:28px 0 22px">${ico('Sessions', 'i16')}` +
+    '<div class="val" style="margin-top:8px;font-size:13px">Nothing here</div>' +
+    '<div class="sec" style="margin-top:3px">Sessions show up as they change.</div></div>';
+  return `<div class="content"><div class="switch">${sw}</div>${body}${footer('Super+J · next one waiting', 'key')}</div>`;
+}
+
+function mainPopup() {
+  const names = tabsFor(S.opt);
+  if (!names.includes(S.tab[S.opt])) S.tab[S.opt] = names[0];
+  const cur = S.tab[S.opt];
+  const n = S.list.filter(attention).length;
+  const badged = t => n && ((S.opt === 'B' && t === 'Sessions') || (S.opt === 'A' && t === S.aName));
+  const tabs = names.map(t => `<div class="tab${t === cur ? ' sel' : ''}" data-a="tab" data-t="${t}">` +
+    `${ico(t)}<span>${t}</span>${badged(t) && t !== cur ? '<i class="tbadge"></i>' : ''}</div>`).join('');
+  let body, foot;
+  if (cur === 'Limits' || A_NAMES.includes(cur)) {
+    body = limits() + (S.opt === 'A' ? sectionA() : '');
+    foot = footer('Updated 2 min ago');
+  } else if (cur === 'Sessions') {
+    body = S.opt === 'B' ? sessionsB() : sessionsC();
+    foot = footer(`${S.list.length} sessions · live`);
+  } else {
+    body = `<div class="cropped">${SVGS[cur]}</div>`;
+    foot = footer('Updated 2 min ago');
+  }
+  return `<div class="content"><div class="tabs">${tabs}</div>${body}${foot}</div>`;
+}
+
+function render() {
+  topbar();
+  const stage = document.getElementById('stage');
+  stage.innerHTML = S.open ? `<div class="popup" id="popup">${S.open === 'sess' ? sessPopupD() : mainPopup()}</div>` : '';
+  if (S.open) {
+    const anchor = document.querySelector(`[data-pop="${S.open}"]`);
+    const pop = document.getElementById('popup');
+    const r = anchor.getBoundingClientRect();
+    const left = Math.max(8, Math.min(window.innerWidth - pop.offsetWidth - 8, r.left + r.width / 2 - pop.offsetWidth / 2));
+    pop.style.left = left + 'px';
+  }
+  document.getElementById('opts').innerHTML = Object.entries(OPTIONS).map(([k, o]) =>
+    `<div class="opt${S.opt === k ? ' sel' : ''}" data-a="opt" data-o="${k}"><b>${o.title}</b><div>${o.short}</div></div>`).join('');
+  document.getElementById('scen').innerHTML = [['needs', 'Esperando'], ['working', 'Trabalhando'], ['quiet', 'Quieto']]
+    .map(([k, l]) => `<b class="${S.scen === k ? 'sel' : ''}" data-a="scen" data-s="${k}">${l}</b>`).join('');
+  document.getElementById('notes').innerHTML = NOTES[S.opt];
+  document.getElementById('aNames').hidden = S.opt !== 'A';
+  document.getElementById('aSwitch').innerHTML = A_NAMES.map(k =>
+    `<b class="${S.aName === k ? 'sel' : ''}" data-a="aname" data-n="${k}">${k}</b>`).join('');
+  document.getElementById('notifyBtn').hidden = S.opt !== 'D';
+}
+
+let toastTimer, notifTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.innerHTML = `<div class="toast">${msg}</div>`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (el.innerHTML = ''), 2600);
+}
+
+function notify() {
+  const s = needs()[0];
+  if (!s) return toast('Nenhuma seção esperando você neste cenário');
+  const body = s.kind === 'permission' ? `Wants to run <b>${esc(s.cmd)}</b>` : esc(s.detail);
+  const acts = s.kind === 'permission'
+    ? `<div class="btn pri" data-a="allow" data-id="${s.id}">Allow</div><div class="btn" data-a="deny" data-id="${s.id}">Deny</div>`
+    : '';
+  document.getElementById('notif').innerHTML = `<div class="notif"><div class="nt">${GAUGE.replace('width="16" height="16"', '')}` +
+    `<div><div class="title">${s.name} needs you</div><div class="body">${body}</div></div></div>` +
+    `<div class="acts">${acts}<div class="btn" data-a="open" data-id="${s.id}">Open</div></div></div>`;
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => (document.getElementById('notif').innerHTML = ''), 8000);
+}
+
+function act(a, id, text) {
+  const s = S.list.find(x => x.id === id);
+  if (!s) return;
+  if (a === 'allow') {
+    Object.assign(s, {state: 'working', detail: `Running ${s.cmd}`, since: 0});
+    toast(`Allowed · ${s.name} continues`);
+  } else if (a === 'deny') {
+    Object.assign(s, {state: 'working', detail: 'Handling the denial', since: 0});
+    toast(`Denied · ${s.name} was told no`);
+  } else if (a === 'reply') {
+    Object.assign(s, {state: 'working', detail: 'Reading your reply', since: 0});
+    toast(`Sent to ${s.name}: “${esc(text)}”`);
+  } else if (a === 'open') {
+    s.unseen = false;
+    toast(`Ghostty brought to the front · ${s.name}`);
+  }
+  document.getElementById('notif').innerHTML = '';
+  render();
+}
+
+document.addEventListener('click', e => {
+  const pop = e.target.closest('[data-pop]');
+  if (pop) { S.open = S.open === pop.dataset.pop ? null : pop.dataset.pop; render(); return; }
+  const el = e.target.closest('[data-a]');
+  if (!el) {
+    if (!e.target.closest('.popup, .panel, .notif, .entry')) { S.open = null; render(); }
+    return;
+  }
+  const a = el.dataset.a;
+  if (a === 'tab') { S.tab[S.opt] = el.dataset.t; S.exp = null; }
+  else if (a === 'opt') {
+    S.opt = el.dataset.o; S.exp = null; S.open = 'main';
+    if (S.opt === 'C' && needs().length) S.tab.C = 'Sessions';
+  }
+  else if (a === 'scen') {
+    S.scen = el.dataset.s; S.list = scenario(S.scen); S.exp = null;
+    if (S.opt === 'C' && needs().length) S.tab.C = 'Sessions';
+  }
+  else if (a === 'reset') { S.list = scenario(S.scen); S.exp = null; }
+  else if (a === 'expand') { S.exp = S.exp === el.dataset.id ? null : el.dataset.id; }
+  else if (a === 'filter') { S.filter = el.dataset.f; }
+  else if (a === 'aname') { S.aName = el.dataset.n; S.tab.A = S.aName; S.open = 'main'; }
+  else if (a === 'notify') { notify(); return; }
+  else if (a === 'toast') { toast(el.dataset.msg); return; }
+  else if (a === 'noop') { return; }
+  else { act(a, el.dataset.id); return; }
+  render();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList.contains('entry') && e.target.value.trim())
+    act('reply', e.target.dataset.id, e.target.value.trim());
+  if (e.key === 'j' && e.metaKey) {
+    const s = needs()[0];
+    toast(s ? `Super+J · Ghostty brought to the front · ${s.name}` : 'Super+J · nothing waiting');
+  }
+});
+window.addEventListener('resize', render);
+const [hashOpt, hashOpen] = location.hash.slice(1).split('-');
+if (OPTIONS[hashOpt]) S.opt = hashOpt;
+if (hashOpen === 'sess' && S.opt === 'D') S.open = 'sess';
+if (A_NAMES.includes(hashOpen)) { S.aName = hashOpen; S.tab.A = 'Projects'; }
+render();
+</script>
+</body>
+</html>
