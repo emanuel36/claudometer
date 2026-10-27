@@ -51,15 +51,23 @@ It prints one line per test file, and the failing checks of the first file that 
 ## GNOME versions
 
 ```bash
-bash tests/shell/run.sh          # every version in metadata.json
+bash tests/shell/run.sh          # every version listed below
 bash tests/shell/run.sh 50 51    # only some
 ```
 
-For each GNOME version, it starts a headless GNOME Shell in a Fedora container (Docker is
-needed) and loads the packed extension. It opens the popup on every tab, disables and enables
-the extension as a screen lock does, and opens the preferences. It fails on any error either one
-logs. The extension reads a fake login, so it sends one request that the usage service rejects.
-Add a version to `metadata.json` only after it passes; a new one also needs its Fedora release
+For each GNOME version, it starts a headless GNOME Shell in an Ubuntu container (Docker is
+needed), one release per version, and installs the extension with `install.sh` from a tarball of
+the working tree. It opens the popup on every tab, disables and enables the extension as a
+screen lock does, and opens the preferences. It fails on any error either one logs. The
+extension reads a fake login, so it sends one request that the usage service rejects.
+
+| GNOME | 46 | 47 | 48 | 49 | 50 | 51 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Ubuntu | 24.04 | 24.10 | 25.04 | 25.10 | 26.04 | 26.10 |
+
+The releases past their end of life (24.10, 25.04 and 25.10 today) are fetched from
+`old-releases.ubuntu.com`. The shell accepts only the versions in `metadata.json`, so add a
+version there only after it passes; a new one also needs its Ubuntu release in the `UBUNTU` map
 in `tests/shell/run.sh`.
 
 ## Lint

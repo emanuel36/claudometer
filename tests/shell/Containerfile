@@ -1,10 +1,19 @@
-# A headless GNOME Shell to load the extension in; BASE picks the Fedora release, and so the
+# A headless GNOME Shell to load the extension in; BASE picks the Ubuntu release, and so the
 # GNOME version (see run.sh).
-ARG BASE=fedora:40
+ARG BASE=ubuntu:24.04
 FROM ${BASE}
-RUN dnf install -y --setopt=install_weak_deps=False \
-        gnome-shell gjs glib2 dbus-daemon dbus-tools mesa-dri-drivers unzip \
-    && dnf clean all
+ENV DEBIAN_FRONTEND=noninteractive
+# A release past its end of life has moved from the main mirrors to old-releases
+RUN { apt-get update || { \
+        for f in /etc/apt/sources.list /etc/apt/sources.list.d/*; do \
+            [ -f "$f" ] && sed -i -E \
+                's#//(archive|security)\.ubuntu\.com#//old-releases.ubuntu.com#g' "$f"; \
+        done; \
+        apt-get update; }; } \
+    && apt-get install -y --no-install-recommends \
+        gnome-shell gnome-shell-extension-prefs gjs libglib2.0-bin dbus xwayland \
+        libgl1-mesa-dri librsvg2-common ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
 # Xwayland needs it, even with no X11 client
 RUN mkdir -m 1777 -p /tmp/.X11-unix
 RUN useradd --create-home tester
