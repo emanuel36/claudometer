@@ -26,6 +26,24 @@ const BACKOFF_BASE_SECONDS = 120;
 const BACKOFF_MAX_SECONDS = 1800;
 
 /**
+ * Formats a span of minutes as a short countdown.
+ *
+ * Args:
+ *     minutes: whole minutes, zero or more.
+ *
+ * Returns:
+ *     "1d 1h", "1h 12m" or "4m".
+ */
+export function formatDuration(minutes) {
+    const days = Math.floor(minutes / 1440);
+    const hours = Math.floor(minutes % 1440 / 60);
+    const mins = minutes % 60;
+    if (days > 0)
+        return `${days}d ${hours}h`;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+}
+
+/**
  * How long to stop calling the API after an HTTP 429.
  *
  * Args:
@@ -138,13 +156,7 @@ export function limitTimeText(isoString, nowMs, {stale, style, use24h}) {
         return `${WEEKDAYS[new Date(resetMs).getDay()]} ${clock}`;
     }
 
-    const totalMinutes = Math.floor((resetMs - nowMs) / 60000);
-    const days = Math.floor(totalMinutes / 1440);
-    const hours = Math.floor(totalMinutes % 1440 / 60);
-    const minutes = totalMinutes % 60;
-    if (days > 0)
-        return `${days}d ${hours}h`;
-    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    return formatDuration(Math.floor((resetMs - nowMs) / 60000));
 }
 
 export const SCREEN_STATES = {

@@ -2,8 +2,8 @@
 import System from 'system';
 
 import {
-    SCREEN_STATES, State, backoffSeconds, formatAgo, formatClock, isTokenExpired,
-    limitTimeText, limitsScreen, stateForStatus, statusLine,
+    SCREEN_STATES, State, backoffSeconds, formatAgo, formatClock, formatDuration,
+    isTokenExpired, limitTimeText, limitsScreen, stateForStatus, statusLine,
 } from '../src/limits/status.js';
 
 let failures = 0;
@@ -91,6 +91,11 @@ check('not signed in', limitsScreen(State.NO_LOGIN, null, false).line,
 check('failed shows the detail', limitsScreen(State.FAILED, 'HTTP 503', false).line,
     'HTTP 503. Trying again soon.');
 check('empty state', SCREEN_STATES.empty.title, 'No activity yet');
+
+check('duration minutes', formatDuration(4), '4m');
+check('duration zero', formatDuration(0), '0m');
+check('duration hours', formatDuration(72), '1h 12m');
+check('duration days', formatDuration(1500), '1d 1h');
 
 if (failures > 0) {
     print(`\n${failures} failed`);
