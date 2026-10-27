@@ -1,7 +1,7 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
-import Soup from 'gi://Soup';
 
+import {abortSession, createSession, getUrl} from './http.js';
 import {firstRequestDelayMs, parseCache, serializeCache} from './cache.js';
 import {State, backoffSeconds, isTokenExpired, stateForStatus} from './status.js';
 
@@ -42,10 +42,7 @@ export class UsageClient {
         this._cachePath = cachePath;
         this._onChange = onChange;
         this._cancellable = new Gio.Cancellable();
-        this._session = new Soup.Session({
-            timeout: REQUEST_TIMEOUT_SECONDS,
-            user_agent: userAgent,
-        });
+        this._session = createSession({timeoutSeconds: REQUEST_TIMEOUT_SECONDS, userAgent});
         this._snapshot = {state: State.FRESH, detail: null, data: null, lastSuccessMs: 0};
         this._rejectedToken = null;
         this._lastRequestMs = 0;
@@ -191,30 +188,20 @@ export class UsageClient {
             return;
         this._lastRequestMs = Date.now();
 
-        const message = Soup.Message.new('GET', USAGE_URL);
-        message.request_headers.append('Authorization', `Bearer ${token}`);
-        message.request_headers.append('anthropic-beta', USAGE_BETA);
-        // A pooled connection that reaches Soup's 60 s idle limit fails at once with "Socket
-        // I/O timed out", and refresh intervals are often 60 s
-        message.add_flags(Soup.MessageFlags.NEW_CONNECTION);
-
-        this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null,
-            (session, result) => {
-                if (this._destroyed)
-                    return;
-                let bytes;
-                try {
-                    bytes = session.send_and_read_finish(result);
-                } catch (e) {
-                    console.warn('Claudometer: Cannot reach the usage service:', e.message);
-                    this._report(State.OFFLINE);
-                    this._retryOffline();
-                    return;
-                }
-                this._cancelRetry();
-                this._handleResponse(message, bytes, token);
-                this._saveCache();
-            });
+        const headers = [['Authorization', `Bearer ${token}`], ['anthropic-beta', USAGE_BETA]];
+        getUrl(this._session, USAGE_URL, headers, (error, response) => {
+            if (this._destroyed)
+                return;
+            if (error) {
+                console.warn('Claudometer: Cannot reach the usage service:', error.message);
+                this._report(State.OFFLINE);
+                this._retryOffline();
+                return;
+            }
+            this._cancelRetry();
+            this._handleResponse(response, token);
+            this._saveCache();
+        });
     }
 
     // Requests that never reach the service change nothing worth saving
@@ -251,8 +238,8 @@ export class UsageClient {
             });
     }
 
-    _handleResponse(message, bytes, token) {
-        const status = message.status_code;
+    _handleResponse(response, token) {
+        const {status} = response;
         const state = stateForStatus(status);
         if (state === State.EXPIRED) {
             this._rejectedToken = token;
@@ -261,7 +248,7 @@ export class UsageClient {
         }
         if (status === 429) {
             this._backoffSeconds = backoffSeconds(
-                message.response_headers.get_one('Retry-After'), this._backoffSeconds);
+                response.retryAfter, this._backoffSeconds);
             this._backoffUntilMs = Date.now() + this._backoffSeconds * 1000;
         }
         if (state === State.FAILED) {
@@ -271,7 +258,7 @@ export class UsageClient {
 
         let data;
         try {
-            data = JSON.parse(new TextDecoder().decode(bytes.get_data()));
+            data = JSON.parse(new TextDecoder().decode(response.body));
         } catch {
             this._report(State.FAILED, 'Invalid response');
             return;
@@ -305,7 +292,7 @@ export class UsageClient {
             this._credentialsMonitor.disconnect(this._credentialsId);
         this._credentialsMonitor?.cancel();
         this._credentialsMonitor = null;
-        this._session.abort();
+        abortSession(this._session);
         this._session = null;
     }
 }
