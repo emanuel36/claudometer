@@ -146,4 +146,40 @@ export default [
             ],
         },
     },
+    {
+        // The pre-45 converter (legacy/convert.js) rewrites these files with regular expressions,
+        // so they stay within the import and export forms it handles.
+        files: ['extension.js', 'prefs.js', 'src/**/*.js', 'legacy/overrides/**/*.js'],
+        rules: {
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector: 'MethodDefinition[key.name="_init"] CallExpression' +
+                        '[arguments.length<=1][callee.object.type="Super"]' +
+                        '[callee.property.name="_init"]',
+                    message: 'Use constructor() and super()',
+                },
+                {
+                    selector: 'ExportAllDeclaration',
+                    message: 'legacy/convert.js cannot convert this form',
+                },
+                {
+                    selector: 'ExportNamedDeclaration[source]',
+                    message: 'legacy/convert.js cannot convert this form',
+                },
+                {
+                    selector: 'ExportNamedDeclaration[declaration=null]',
+                    message: 'legacy/convert.js cannot convert this form',
+                },
+                {
+                    selector: 'ImportExpression',
+                    message: 'legacy/convert.js cannot convert this form',
+                },
+                {
+                    selector: 'ExportDefaultDeclaration[declaration.type!="ClassDeclaration"]',
+                    message: 'legacy/convert.js cannot convert this form',
+                },
+            ],
+        },
+    },
 ];
