@@ -2,12 +2,14 @@
 
 ## Goal
 
-A GNOME Shell extension that answers two questions without leaving the desktop:
+A GNOME Shell extension that answers three questions without leaving the desktop:
 
 - **How close am I to my Claude Code plan limits?** The 5-hour and weekly limits, always
   visible in the top bar, with the details one click away.
 - **How do I use Claude Code over time?** Output per day, per project and per model, built from
   the history Claude Code already keeps on the computer.
+- **Which of my sessions needs me now?** The Claude Code sessions that wait for a permission or
+  an answer, or have finished, listed in one place and reached with one click.
 
 ## Principles
 
@@ -17,7 +19,8 @@ A GNOME Shell extension that answers two questions without leaving the desktop:
   states, so the popup reads as one design.
 - **Local first.** The Claude Code login is only sent to `api.anthropic.com` to read the
   limits. The history never leaves the computer, and only token counts, times, models and
-  project folders are read from it, never the conversations.
+  project folders are read from it, never the conversations. Of the running sessions, only
+  their names and states are read.
 - **Light on the shell.** No synchronous file IO in the shell process. Reading the history is
   slow the first time, so a helper process does it and the shell only reads a small summary.
   Everything created in `enable()` is destroyed in `disable()`.
@@ -45,26 +48,63 @@ The indicator is an optional icon followed by the usage.
 The icon is a gauge: a dial open at the bottom, with a needle past the middle and a dot at
 its pivot, in the accent color. It is original art, not Anthropic's logo.
 
+While anything is new for you (see Status), a 7px accent dot sits at the top right of the icon,
+ringed by the top bar's background. When the icon is hidden, the dot follows the label.
+
 ## Popup
 
 A tab bar, the tab's content (244px wide) and a footer.
 
-- **Tabs:** Limits, Projects, Activity, Models; each an icon over a short name. Projects,
-  Activity and Models can be hidden. The popup opens on the tab used last.
+- **Tabs:** Status, Projects, Activity, Models; each an icon over a short name (Status has
+  three rows, each a dot and a line). Projects, Activity and Models can be hidden; Status
+  cannot. The popup opens on the tab used last; a stored `Limits` opens as Status. While
+  anything is new and another tab is open, the Status icon carries the same accent dot.
 - **Footer:** on the left, the state of the limits ("Updated 2 min ago", "Offline · values
   from 14:05", "Login expired · open Claude Code", "HTTP 503 · retrying"); on the right, a gear
   that opens the settings.
 
-### Limits
+### Status
 
-A table: `LIMIT · meter · USED · LEFT`, one row per limit: `5-hour`, `Weekly`, and, when the
-plan has them and the setting is on, one `<Model> weekly` row per model with its own limit.
+The limits table, then the SESSIONS section.
+
+**Limits table.** A table: `LIMIT · meter · USED · LEFT`, one row per limit: `5-hour`,
+`Weekly`, and, when the plan has them and the setting is on, one `<Model> weekly` row per
+model with its own limit.
 
 - **Meter:** 56×8px, rounded, always the accent color.
 - **Time left:** a countdown (`3d 5h`, `2h 14m`, `14m`), or the clock time of the reset (`16:34`,
   `Sun 19:20`, following the system 12/24-hour setting), in which case the header reads
   `RESETS`.
 - **Outdated values** stay on screen, faded, while the footer says why.
+
+**SESSIONS.** A row line, then a header: `SESSIONS` on the left and, on the right,
+`2 WAITING FOR YOU` (the sessions that wait plus the finished ones not yet seen) or
+`NOTHING WAITING`. The section lists only the sessions that need you; every other one is
+counted in the last line.
+
+- **Rows**, separated by row lines, in this order: waiting (longest first), done and not seen
+  (latest first), done and seen (latest first). Each row has an 8px marker with 2px corners,
+  the name, a label and the time in that state (`4m`, `1h 12m`).
+- **Marker:** accent for waiting and for done not seen; dim grey `rgba(255,255,255,0.22)` for
+  done and seen.
+- **Label:** `Permission` (permission prompt or sandbox request), `Question`, `Waiting` (any
+  other wait) or `Done`.
+- **Done** is a session whose turn ended: it went idle after working or waiting. It stays
+  until you click it, until it starts working again, or for the time set in the settings after
+  it was seen.
+- **Seen:** the done sessions listed while the Status tab shows count as seen: when the popup
+  opens on it, or when it is picked while the popup is open. Opening the popup on another tab
+  marks nothing. Rows marked during the current opening keep their accent look until the popup
+  closes; afterwards a seen row is dimmed: grey marker and its text faded like outdated values.
+  Waiting sessions are never seen.
+- **Last line:** `2 working · 1 idle`, or `No Claude Code sessions`.
+- **Click:** brings the session's Ghostty tab and window to the front, closes the popup and
+  removes a done session from the list. This works for terminal sessions in Ghostty on X11. For
+  anything else (Wayland, a background session, another terminal, or a failure) the row is
+  handled the same way and the popup closes, with nothing focused.
+
+Times refresh while the popup is open. The section shows nothing of the conversations, paths
+or tools. The limits' screen states replace only the table, not this section.
 
 ### Projects and Models
 
@@ -92,12 +132,12 @@ icon, a title and one line.
 
 | State | Tabs | Title | Line |
 |---|---|---|---|
-| Loading | Limits | Checking your limits | This takes a few seconds. |
+| Loading | Status | Checking your limits | This takes a few seconds. |
 | Loading | Projects, Activity, Models | Reading your activity | This takes about a minute the first time. |
-| Offline | Limits | You are offline | Limits will refresh when the network is back. |
-| No login | Limits | Not signed in | Sign in to Claude Code to see your limits. |
-| Expired login | Limits | Login expired | Open Claude Code to renew it. |
-| Service error | Limits | Limits unavailable | HTTP 503. Trying again soon. |
+| Offline | Status | You are offline | Limits will refresh when the network is back. |
+| No login | Status | Not signed in | Sign in to Claude Code to see your limits. |
+| Expired login | Status | Login expired | Open Claude Code to renew it. |
+| Service error | Status | Limits unavailable | HTTP 503. Trying again soon. |
 | Empty range | Projects, Activity, Models | No activity yet | Use Claude Code and it will show up here. |
 
 ### Look
@@ -118,7 +158,7 @@ toggle buttons; on/off options are switches.
 | Page | Groups and options |
 |---|---|
 | Top bar | Show icon; Style and Limit shown, with a live preview; Color and Scale; Position |
-| Popup | Tabs shown; per-model limits (off); reset times as countdown or clock; what the charts count (output, output and input, or all including cache); the range Activity and the lists start on; project names; hidden projects |
+| Popup | In four groups. Tabs: tabs shown. Status: sessions in the Status tab (on), keep seen results for 10, 30 (default) or 60 minutes, per-model limits (off), reset times as countdown or clock. Activity: what the charts count (output, output and input, or all including cache), the range Activity and the lists start on. Projects: project names, hidden projects |
 | Data | Refresh limits every 1, 5 (default), 15, 30 or 60 minutes; how often the history is read; Claude Code folder; keep history forever (default) or for a number of days, weeks, months or years; rebuild the history; export it as CSV |
 | About | Icon, name, version, project page, report a problem |
 
@@ -134,10 +174,22 @@ toggle buttons; on/off options are switches.
   messages by id, and writes hourly totals per project and model family. The shell reads only
   that summary, asynchronously. What has been read stays after Claude Code deletes old
   transcripts.
+- **Sessions:** the small files Claude Code keeps for each running session in its folder, read
+  only and never written. Each gives the session's name, state and the time of its last
+  change; no transcript is read and nothing is added to Claude Code's settings. The folder is
+  watched, and a slow check catches sessions that end without removing their file. Which
+  sessions are done and which are seen is kept in Claudometer's own data folder, so it
+  survives a screen lock and a shell restart. Nothing is read while the setting is off.
+- **Click:** each session runs in its own terminal. To find its Ghostty tab, Claudometer sends
+  an invisible desktop-notification code to that terminal, catches Ghostty's notification
+  inside the shell before it is shown, and asks Ghostty to bring that tab forward. Nothing
+  appears in the terminal or on screen, and the tab is remembered while the session runs. If
+  Ghostty does not answer within about a second, the click only marks the row as handled.
 
 ## Mockups
 
-`docs/images/` holds one mockup per tab, drawn with made-up data, and `overview.svg`, the
-README image: the four tabs in two columns that end together on a desktop background, the
-shorter column topped by a magnified piece of the top bar with the indicator in its default
-look. It is built from the tab mockups, so it is rebuilt whenever one of them changes.
+`docs/images/` holds one mockup per tab (`status.svg`, `projects.svg`, `activity.svg`,
+`models.svg`), drawn with made-up data, and `overview.svg`, the README image: the four tabs in
+two columns that end together on a desktop background, the shorter column topped by a magnified
+piece of the top bar with the indicator in its default look. It is built from the tab mockups,
+so it is rebuilt whenever one of them changes.

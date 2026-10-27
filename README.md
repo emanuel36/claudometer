@@ -4,7 +4,7 @@ Your Claude Code plan limits in the GNOME top bar, and how you use Claude Code o
 
 <p align="center">
   <a href="#claudometer"><img src="docs/images/overview.svg" width="800"
-    alt="The top bar indicator and the Limits, Projects, Activity and Models tabs"></a>
+    alt="The top bar indicator and the Status, Projects, Activity and Models tabs"></a>
 </p>
 
 ## Install
@@ -30,6 +30,8 @@ To update, run the same command again and log out and back in.
 ## Privacy
 
 Your Claude Code login is only sent to Anthropic, to read your limits. Your history never
-leaves the computer, and the conversations themselves are never read.
+leaves the computer, and the conversations themselves are never read. Claudometer reads which
+Claude Code sessions are running and their state, never their conversations. Clicking a session
+sends an invisible signal to its terminal to bring its tab to the front.
 
 [MIT](LICENSE) · Not affiliated with or endorsed by Anthropic.

@@ -11,14 +11,14 @@ const WIDTH = 292;  // Every tab mockup has this width.
 const GAP = 12;
 const MARGIN = 20;
 const SCALE = 1.3;  // Of the top bar piece.
-const VALUE = 42;  // The 5-hour limit, as in limits.svg.
+const VALUE = 42;  // The 5-hour limit, as in status.svg.
 
 const decoder = new TextDecoder();
 const read = path => decoder.decode(GLib.file_get_contents(`${ROOT}/${path}`)[1]);
 const inner = svg => svg.slice(svg.indexOf('>') + 1, svg.lastIndexOf('</svg>'));
 
 const tabs = {};
-for (const key of ['limits', 'projects', 'activity', 'models']) {
+for (const key of ['status', 'projects', 'activity', 'models']) {
     const svg = read(`docs/images/${key}.svg`);
     tabs[key] = {body: inner(svg), height: Number(svg.match(/height="(\d+)"/)[1])};
 }
@@ -29,9 +29,14 @@ function tab(key, x, y) {
         `viewBox="84 28 ${WIDTH} ${height}">${body}</svg>`;
 }
 
+// The 7px accent dot for sessions that need you, ringed by the top bar's background, on the
+// icon's top right corner (in the icon's 16px units)
+const DOT = '<circle cx="11" cy="5" r="4.25" fill="#d97757" stroke="#000" stroke-width="1.5"/>';
+
 /**
  * A magnified piece of the top bar: workspace dots, the clock and the indicator in its default
- * look (icon, then the 5-hour limit colored by usage).
+ * look (icon with the accent dot, as the made-up sessions wait, then the 5-hour limit colored
+ * by usage).
  */
 function topBar(x, y, height) {
     const s = SCALE;
@@ -49,19 +54,20 @@ function topBar(x, y, height) {
         `<text x="${x + WIDTH / 2 + 8 * s}" y="${cy + 4.3 * s}" font-size="${12 * s}" ` +
         'font-weight="700" fill="#fff" text-anchor="middle">26 Oct 09:41</text>' +
         `<svg x="${left}" y="${cy - icon / 2}" width="${icon}" height="${icon}" ` +
-        `viewBox="0 0 16 16">${inner(read('icons/claudometer.svg'))}</svg>` +
+        `viewBox="0 0 16 16">${inner(read('icons/claudometer.svg'))}${DOT}</svg>` +
         `<text x="${left + icon + 5 * s}" y="${cy + size * 0.36}" font-size="${size}" ` +
         `font-weight="700" fill="${usageColor(VALUE, 'usage', 'orange')}">${label}</text>`;
 }
 
-// Two columns that end together: the top bar piece fills what the left one lacks.
-const right = tabs.models.height + GAP + tabs.activity.height;
-const barHeight = right - (tabs.limits.height + GAP + tabs.projects.height) - GAP;
+// Two columns that end together: the top bar piece fills what the shorter one lacks.
+const left = tabs.status.height + GAP + tabs.activity.height;
+const right = tabs.projects.height + GAP + tabs.models.height;
+const barHeight = left - right - GAP;
 const x1 = MARGIN;
 const x2 = MARGIN + WIDTH + GAP;
-const y1 = MARGIN + barHeight + GAP;
+const y2 = MARGIN + barHeight + GAP;
 const width = 2 * WIDTH + GAP + 2 * MARGIN;
-const height = right + 2 * MARGIN;
+const height = left + 2 * MARGIN;
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" ` +
     `viewBox="0 0 ${width} ${height}" font-family="${FONT}">\n` +
@@ -69,10 +75,10 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${
     '<stop offset="0" stop-color="#3a3f58"/><stop offset="1" stop-color="#1f2233"/>' +
     '</linearGradient></defs>\n' +
     `<rect width="${width}" height="${height}" rx="10" fill="url(#wall)"/>\n` +
-    `${topBar(x1, MARGIN, barHeight)}\n` +
-    `${tab('limits', x1, y1)}\n` +
-    `${tab('projects', x1, y1 + tabs.limits.height + GAP)}\n` +
-    `${tab('models', x2, MARGIN)}\n` +
-    `${tab('activity', x2, MARGIN + tabs.models.height + GAP)}\n` +
+    `${tab('status', x1, MARGIN)}\n` +
+    `${tab('activity', x1, MARGIN + tabs.status.height + GAP)}\n` +
+    `${topBar(x2, MARGIN, barHeight)}\n` +
+    `${tab('projects', x2, y2)}\n` +
+    `${tab('models', x2, y2 + tabs.projects.height + GAP)}\n` +
     '</svg>\n';
 GLib.file_set_contents(`${ROOT}/docs/images/overview.svg`, svg);
