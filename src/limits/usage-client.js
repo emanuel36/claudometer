@@ -2,6 +2,7 @@ import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import Soup from 'gi://Soup';
 
+import {saveText} from '../files.js';
 import {firstRequestDelayMs, parseCache, serializeCache} from './cache.js';
 import {State, backoffSeconds, isTokenExpired, stateForStatus} from './status.js';
 
@@ -227,28 +228,8 @@ export class UsageClient {
             backoffSeconds: this._backoffSeconds,
             backoffUntilMs: this._backoffUntilMs,
         });
-        const file = Gio.File.new_for_path(this._cachePath);
         // The data folder may not exist yet; the index helper also creates it
-        file.get_parent().make_directory_async(GLib.PRIORITY_DEFAULT, this._cancellable,
-            (dir, result) => {
-                try {
-                    dir.make_directory_finish(result);
-                } catch (e) {
-                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
-                        return;
-                }
-                file.replace_contents_bytes_async(new GLib.Bytes(new TextEncoder().encode(text)),
-                    null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, this._cancellable,
-                    (f, res) => {
-                        try {
-                            f.replace_contents_finish(res);
-                        } catch (e) {
-                            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                                console.warn('Claudometer: Cannot save the usage cache:',
-                                    e.message);
-                        }
-                    });
-            });
+        saveText(this._cachePath, text, this._cancellable, 'usage cache');
     }
 
     _handleResponse(message, bytes, token) {
