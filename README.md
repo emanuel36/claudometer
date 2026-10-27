@@ -9,9 +9,11 @@ Your Claude Code plan limits in the GNOME top bar, and how you use Claude Code o
 
 ## Install
 
-Needs GNOME Shell 45 to 51 and Claude Code signed in with a Pro or Max plan.
+Needs GNOME Shell 42 to 51 (Ubuntu 22.04 to 26.10) and Claude Code signed in with a Pro or
+Max plan.
 
-**From extensions.gnome.org:** coming soon.
+**From extensions.gnome.org:** coming soon, for GNOME Shell 45 and newer. On GNOME Shell 42 to
+44, install with the command below.
 
 **With one command:**
 
@@ -21,6 +23,8 @@ curl -fsSL https://raw.githubusercontent.com/emanuel36/claudometer/main/install.
 
 Then log out and back in. On an X11 session you can instead press Alt+F2, type `r` and press
 Enter.
+
+After you upgrade Ubuntu or GNOME, run the install command again.
 
 Use the gear at the bottom of the popup to change the top bar's look, the tabs shown, the
 periods and how often the limits refresh.

@@ -1,8 +1,9 @@
 // Run with: gjs -m tests/convert.test.js
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import System from 'system';
 
-import {convertModule} from '../legacy/convert.js';
+import {convertExtension, convertModule} from '../legacy/convert.js';
 
 let failures = 0;
 
@@ -126,6 +127,82 @@ for (const file of files) {
         break;
 }
 check('the real tree', tree, 'ok');
+
+const decoder = new TextDecoder();
+
+function read(dir, path) {
+    return decoder.decode(dir.resolve_relative_path(path).load_contents(null)[1]);
+}
+
+function write(dir, path, text) {
+    const file = dir.resolve_relative_path(path);
+    if (!file.get_parent().query_exists(null))
+        file.get_parent().make_directory_with_parents(null);
+    file.replace_contents(new TextEncoder().encode(text), null, false, 0, null);
+}
+
+function copyTree(source, target) {
+    target.make_directory_with_parents(null);
+    const children = source.enumerate_children('standard::name,standard::type', 0, null);
+    for (let info = children.next_file(null); info; info = children.next_file(null)) {
+        const name = info.get_name();
+        if (info.get_file_type() === Gio.FileType.DIRECTORY)
+            copyTree(source.get_child(name), target.get_child(name));
+        else
+            source.get_child(name).copy(target.get_child(name), 0, null, null);
+    }
+}
+
+// A copy of the files the installer converts, and a legacy folder made of `legacyFiles`
+function fixture(legacyFiles = null) {
+    const dir = Gio.File.new_for_path(GLib.dir_make_tmp('convert-XXXXXX'));
+    for (const name of ['extension.js', 'prefs.js', 'metadata.json'])
+        root.get_child(name).copy(dir.get_child(name), 0, null, null);
+    copyTree(root.get_child('src'), dir.get_child('src'));
+    if (!legacyFiles)
+        return {dir, legacy: root.get_child('legacy')};
+    const legacy = dir.get_child('legacy');
+    for (const [path, text] of Object.entries(legacyFiles))
+        write(legacy, path, text);
+    return {dir, legacy};
+}
+
+function errorOf(fn) {
+    try {
+        fn();
+    } catch (e) {
+        return e instanceof Error ? e.message : String(e);
+    }
+    return '';
+}
+
+const real = fixture();
+convertExtension(real.dir.get_path(), real.legacy.get_path());
+const client = read(real.dir, 'src-legacy/limits/usage-client.js');
+check('convertExtension writes src-legacy', /^import /m.test(client), false);
+check('src is left as it was', read(real.dir, 'src/limits/usage-client.js'),
+    read(root, 'src/limits/usage-client.js'));
+check('overrides win', read(real.dir, 'src-legacy/limits/http.js'),
+    convertModule(read(root, 'legacy/overrides/src/limits/http.js'), 'src/limits/http.js'));
+check('entry points converted in place',
+    read(real.dir, 'extension.js'), convertModule(read(root, 'extension.js'), 'extension.js'));
+check('shim copied', read(real.dir, 'src-legacy/shim.js'), read(root, 'legacy/shim.js'));
+check('metadata versions',
+    JSON.parse(read(real.dir, 'metadata.json'))['shell-version'], ['42', '43', '44']);
+
+const stale = fixture({'shim.js': '// shim\n', 'overrides/src/nope.js': '// nope\n'});
+check('stale override throws', errorOf(() =>
+    convertExtension(stale.dir.get_path(), stale.legacy.get_path())).includes('src/nope.js'), true);
+
+const broken = fixture({
+    'shim.js': '// shim\n', 'overrides/src/limits/cache.js': 'export function f( {}\n',
+});
+check('a module that does not compile throws', errorOf(() =>
+    convertExtension(broken.dir.get_path(), broken.legacy.get_path()))
+    .includes('src/limits/cache.js'), true);
+
+for (const {dir} of [real, stale, broken])
+    GLib.spawn_command_line_sync(`rm -rf ${GLib.shell_quote(dir.get_path())}`);
 
 if (failures > 0)
     System.exit(1);

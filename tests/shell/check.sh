@@ -103,9 +103,14 @@ session() {
         echo "FAIL: no preferences window: $titles"
         fail=1
     fi
-    # The toolkit seam, on the toolkit this version ships
+    # The toolkit seam, on the toolkit this version ships; a toolkit warning fails it too
     WAYLAND_DISPLAY=wayland-0 gjs -m /tests/toolkit-check.js \
-        "$HOME/.local/share/gnome-shell/extensions/$UUID" || fail=1
+        "$HOME/.local/share/gnome-shell/extensions/$UUID" > toolkit.log 2>&1 || fail=1
+    cat toolkit.log
+    if grep -E 'JS ERROR|JS WARNING|-(CRITICAL|WARNING) \*\*' toolkit.log > /dev/null; then
+        echo 'FAIL: the toolkit check logged the warnings above'
+        fail=1
+    fi
     kill %1
     wait
     return $fail
@@ -115,8 +120,11 @@ export UUID DATA
 dbus-run-session -- bash -c session 2> bus.log
 fail=$?
 
+# GNOME 42 and 43 log these on their own: an error when GeoClue, which needs the system bus, is
+# missing, and on 43 a warning from gjs for each D-Bus proxy the shell creates
 if grep -iE 'JS ERROR|JS WARNING|claudometer' shell.log \
-    | grep -v 'Cannot reach the usage service'; then
+    | grep -v -e 'Cannot reach the usage service' -e 'this._managerProxy is undefined' \
+        -e 'method Gio.AsyncInitable.init_async: expected 3, got 4'; then
     echo 'FAIL: the shell logged the lines above'
     fail=1
 fi

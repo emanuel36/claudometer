@@ -8,7 +8,9 @@ URL=${CLAUDOMETER_URL:-https://github.com/emanuel36/claudometer/archive/refs/hea
 EXTENSIONS=${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions
 DEST=$EXTENSIONS/$UUID
 # The GNOME Shell versions the extension supports
-MIN_SHELL=45
+MIN_SHELL=42
+# Up to this version, the installer converts the extension to the pre-45 format
+LAST_LEGACY_SHELL=44
 MAX_SHELL=51
 
 fail() {
@@ -27,7 +29,9 @@ if [ "$shell_major" -lt "$MIN_SHELL" ] || [ "$shell_major" -gt "$MAX_SHELL" ]; t
         "Claudometer needs GNOME Shell $MIN_SHELL to $MAX_SHELL."
 fi
 
-for tool in curl tar glib-compile-schemas gsettings; do
+tools="curl tar glib-compile-schemas gsettings"
+[ "$shell_major" -gt "$LAST_LEGACY_SHELL" ] || tools="$tools gjs"
+for tool in $tools; do
     command -v "$tool" >/dev/null || fail "$tool is needed but was not found."
 done
 if [ -L "$DEST" ]; then
@@ -44,6 +48,10 @@ mkdir "$STAGE/$UUID"
 for item in extension.js prefs.js metadata.json stylesheet.css schemas src icons LICENSE; do
     mv "$STAGE/$item" "$STAGE/$UUID/"
 done
+if [ "$shell_major" -le "$LAST_LEGACY_SHELL" ]; then
+    gjs -m "$STAGE/legacy/main.js" "$STAGE/$UUID" ||
+        fail "Could not prepare Claudometer for GNOME Shell $shell_major."
+fi
 glib-compile-schemas "$STAGE/$UUID/schemas"
 
 rm -rf "$DEST"

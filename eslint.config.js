@@ -147,6 +147,12 @@ export default [
         },
     },
     {
+        // Copied as is into the converted extension, where the pre-45 importer exports `var`s
+        files: ['legacy/shim.js'],
+        languageOptions: {sourceType: 'script'},
+        rules: {'no-var': 'off'},
+    },
+    {
         // The pre-45 converter (legacy/convert.js) rewrites these files with regular expressions,
         // so they stay within the import and export forms it handles.
         files: ['extension.js', 'prefs.js', 'src/**/*.js', 'legacy/overrides/**/*.js'],

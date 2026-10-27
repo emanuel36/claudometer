@@ -101,3 +101,16 @@ export function loadCss(provider, css) {
 export function toast(window, title) {
     window.add_toast(new Adw.Toast({title, use_markup: false}));
 }
+
+/**
+ * An icon that marks a row as a link to a web page.
+ *
+ * Args:
+ *     _extensionDir: Path of the extension folder; only the GNOME 42 version uses it.
+ *
+ * Returns:
+ *     A Gtk.Image that follows the theme colors.
+ */
+export function externalLinkIcon(_extensionDir) {
+    return new Gtk.Image({icon_name: 'adw-external-link-symbolic'});
+}

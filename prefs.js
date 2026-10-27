@@ -14,7 +14,9 @@ import {
 } from './src/prefs/prefs-widgets.js';
 import {parseHiddenProjects} from './src/history/stats.js';
 import {parseIndex} from './src/history/transcripts.js';
-import {chooseSaveFile, confirm, openUri, switchRow, toast} from './src/prefs/toolkit.js';
+import {
+    chooseSaveFile, confirm, externalLinkIcon, openUri, switchRow, toast,
+} from './src/prefs/toolkit.js';
 
 Gio._promisify(Gio.File.prototype, 'load_contents_async', 'load_contents_finish');
 Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async', 'replace_contents_finish');
@@ -397,7 +399,7 @@ export default class ClaudometerPreferences extends ExtensionPreferences {
 
         const link = (title, uri) => {
             const row = new Adw.ActionRow({title, activatable: true});
-            row.add_suffix(new Gtk.Image({icon_name: 'adw-external-link-symbolic'}));
+            row.add_suffix(externalLinkIcon(this.path));
             row.connect('activated', () => openUri(window, uri));
             return row;
         };

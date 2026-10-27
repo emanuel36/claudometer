@@ -14,6 +14,11 @@ RUN { apt-get update || { \
         gnome-shell gnome-shell-extension-prefs gjs libglib2.0-bin dbus xwayland \
         libgl1-mesa-dri librsvg2-common ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
+# GNOME 42 loads Soup 2.4; with Soup 3 installed next to it, the test proves the extension uses
+# the one the shell has loaded
+RUN . /etc/os-release && if [ "$VERSION_ID" = 22.04 ]; then \
+        apt-get update && apt-get install -y --no-install-recommends gir1.2-soup-3.0 \
+        && rm -rf /var/lib/apt/lists/*; fi
 # Xwayland needs it, even with no X11 client
 RUN mkdir -m 1777 -p /tmp/.X11-unix
 RUN useradd --create-home tester

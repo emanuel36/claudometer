@@ -1,6 +1,6 @@
 # Claudometer
 
-GNOME Shell extension (GNOME 46 to 51; this machine runs 46 on X11). Developer notes are in
+GNOME Shell extension (GNOME 42 to 51; this machine runs 46 on X11). Developer notes are in
 CONTRIBUTING.md: layout, tests, logs and packaging. The README is for users: no internals, and
 no code beyond the install commands.
 

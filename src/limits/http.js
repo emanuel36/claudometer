@@ -25,7 +25,7 @@ export function createSession({timeoutSeconds, userAgent}) {
  *     callback: Called once with `(error, response)`. `error` is an `Error` when the request did
  *         not complete (network, TLS, timeout), else null and `response` is
  *         `{status, retryAfter, body}`: the status code, the `Retry-After` header or null, and
- *         the body bytes.
+ *         the body bytes as a Uint8Array, empty when there is no body.
  */
 export function getUrl(session, url, headers, callback) {
     const message = Soup.Message.new('GET', url);
@@ -46,7 +46,7 @@ export function getUrl(session, url, headers, callback) {
         callback(null, {
             status: message.status_code,
             retryAfter: message.response_headers.get_one('Retry-After'),
-            body: bytes.get_data(),
+            body: bytes.get_data() ?? new Uint8Array(),
         });
     });
 }

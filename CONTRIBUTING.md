@@ -30,7 +30,8 @@ GNOME Shell caches extension modules, so every code change needs a shell restart
 | `tests/` | Tests for the pure modules; `tests/shell/` loads the extension in each GNOME version |
 | `package.json`, `eslint.config.js`, `.github/` | The linter and the CI workflow; not part of the extension |
 | `docs/` | The design and the README mockups |
-| `install.sh` | The one-command install from the README: downloads `main`, compiles the schema, enables the extension |
+| `install.sh` | The one-command install from the README: downloads `main`, converts it on GNOME 42 to 44, compiles the schema, enables the extension |
+| `legacy/` | The converter to the pre-45 extension format, and the modules that replace `src/` ones on GNOME 42 to 44; not part of the package |
 
 Modules with no GNOME Shell imports (`src/topbar/panel.js`, `src/limits/status.js`,
 `src/limits/limits.js`, `src/limits/cache.js`, `src/history/transcripts.js`,
@@ -61,14 +62,44 @@ the working tree. It opens the popup on every tab, disables and enables the exte
 screen lock does, and opens the preferences. It fails on any error either one logs. The
 extension reads a fake login, so it sends one request that the usage service rejects.
 
-| GNOME | 46 | 47 | 48 | 49 | 50 | 51 |
-| --- | --- | --- | --- | --- | --- | --- |
-| Ubuntu | 24.04 | 24.10 | 25.04 | 25.10 | 26.04 | 26.10 |
+| GNOME | 42 | 43 | 44 | 45 | 46 | 47 | 48 | 49 | 50 | 51 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Ubuntu | 22.04 | 22.10 | 23.04 | 23.10 | 24.04 | 24.10 | 25.04 | 25.10 | 26.04 | 26.10 |
 
-The releases past their end of life (24.10, 25.04 and 25.10 today) are fetched from
-`old-releases.ubuntu.com`. The shell accepts only the versions in `metadata.json`, so add a
-version there only after it passes; a new one also needs its Ubuntu release in the `UBUNTU` map
-in `tests/shell/run.sh`.
+The releases past their end of life (22.10, 23.04, 23.10, 24.10, 25.04 and 25.10 today) are
+fetched from `old-releases.ubuntu.com`. The 22.04 image also has Soup 3 installed, so the test
+shows that the extension uses the Soup 2.4 that GNOME 42 loads. The shell accepts only the
+versions in `metadata.json`, so add a version there only after it passes; a new one also needs
+its Ubuntu release in the `UBUNTU` map in `tests/shell/run.sh`.
+
+## GNOME 42 to 44
+
+GNOME 45 changed the extension format to ES modules, so on 42 to 44 `install.sh` runs
+`gjs -m legacy/main.js` on the downloaded copy before it replaces the installed one:
+
+- Each module under `src/` is converted to the older format into `src-legacy/`, and `src/`
+  stays as it is for the helper process, which runs as an ES module on every version.
+- A module in `legacy/overrides/src/` takes the place of the one at the same path in `src/`:
+  `limits/http.js` uses the Soup the shell has loaded (2.4 on GNOME 42), and
+  `prefs/toolkit.js` uses the widgets of GTK 4.6 and libadwaita 1.1.
+- `extension.js` and `prefs.js` are converted in place, with `legacy/shim.js` standing in for
+  the `Extension` and `ExtensionPreferences` classes, and `metadata.json` lists 42 to 44.
+- A module that fails to convert or to compile stops the install with an error.
+
+The converter rewrites the source with regular expressions, so a lint rule limits
+`extension.js`, `prefs.js`, `src/` and `legacy/overrides/` to the import and export forms it
+handles. `tests/convert.test.js` runs it on the real tree.
+
+To drop GNOME 42 to 44:
+
+1. Delete `legacy/`, `tests/convert.test.js` and the `legacy/` lint blocks in
+   `eslint.config.js`.
+2. In `install.sh`, delete `LAST_LEGACY_SHELL`, the `gjs` check and the conversion block, and
+   set `MIN_SHELL=45`.
+3. Delete `icons/external-link-symbolic.svg`, which only GNOME 42 uses.
+4. In the shell tests, delete the 42 to 44 entries in `run.sh`, the 22.04 extra package in
+   `Containerfile`, the `src-legacy` branch of `toolkit-check.js` and the GNOME 42 and 43 log
+   filters in `check.sh`.
 
 ## Lint
 
