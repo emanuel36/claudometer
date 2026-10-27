@@ -27,8 +27,8 @@ for version in "${versions[@]}"; do
     docker build --quiet --build-arg BASE=ubuntu:$release -t "$image" \
         -f tests/shell/Containerfile tests/shell > /dev/null \
         || { failed+=("$version"); continue; }
-    docker run --rm -v "$work:/work:ro" -v "$PWD/tests/shell/check.sh:/check.sh:ro" "$image" \
-        bash /check.sh || failed+=("$version")
+    docker run --rm -v "$work:/work:ro" -v "$PWD/tests/shell:/tests:ro" "$image" \
+        bash -c 'bash /tests/check-install.sh && bash /tests/check.sh' || failed+=("$version")
 done
 
 if [ ${#failed[@]} -gt 0 ]; then

@@ -7,11 +7,25 @@ UUID=claudometer@emanuel36
 URL=${CLAUDOMETER_URL:-https://github.com/emanuel36/claudometer/archive/refs/heads/main.tar.gz}
 EXTENSIONS=${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions
 DEST=$EXTENSIONS/$UUID
+# The GNOME Shell versions the extension supports
+MIN_SHELL=46
+MAX_SHELL=51
 
 fail() {
     echo "Claudometer: $*" >&2
     exit 1
 }
+
+command -v gnome-shell >/dev/null ||
+    fail "GNOME Shell was not found. Claudometer is a GNOME Shell extension."
+version=$(gnome-shell --version 2>/dev/null || true)
+# The first line that reads "GNOME Shell <version>"; others may be warnings
+shell_major=$(echo "$version" | sed -n '/^GNOME Shell [0-9]/{s/^GNOME Shell \([0-9]*\).*/\1/p;q;}')
+[ -n "$shell_major" ] || fail "Cannot tell the GNOME Shell version from: ${version:-(no output)}"
+if [ "$shell_major" -lt "$MIN_SHELL" ] || [ "$shell_major" -gt "$MAX_SHELL" ]; then
+    fail "GNOME Shell $shell_major is not supported;" \
+        "Claudometer needs GNOME Shell $MIN_SHELL to $MAX_SHELL."
+fi
 
 for tool in curl tar glib-compile-schemas gsettings; do
     command -v "$tool" >/dev/null || fail "$tool is needed but was not found."
