@@ -9,7 +9,7 @@ Your Claude Code plan limits in the GNOME top bar, and how you use Claude Code o
 
 ## Install
 
-Needs GNOME Shell 46 to 51 and Claude Code signed in with a Pro or Max plan.
+Needs GNOME Shell 45 to 51 and Claude Code signed in with a Pro or Max plan.
 
 **From extensions.gnome.org:** coming soon.
 

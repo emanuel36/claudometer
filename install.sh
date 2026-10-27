@@ -8,7 +8,7 @@ URL=${CLAUDOMETER_URL:-https://github.com/emanuel36/claudometer/archive/refs/hea
 EXTENSIONS=${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions
 DEST=$EXTENSIONS/$UUID
 # The GNOME Shell versions the extension supports
-MIN_SHELL=46
+MIN_SHELL=45
 MAX_SHELL=51
 
 fail() {

@@ -6,7 +6,7 @@ set -u
 cd "$(dirname "$0")/../.." || exit 1
 
 # The Ubuntu release that ships each GNOME version: the one list of versions tested
-declare -A UBUNTU=([46]=24.04 [47]=24.10 [48]=25.04 [49]=25.10 [50]=26.04 [51]=26.10)
+declare -A UBUNTU=([45]=23.10 [46]=24.04 [47]=24.10 [48]=25.04 [49]=25.10 [50]=26.04 [51]=26.10)
 versions=("$@")
 [ ${#versions[@]} -eq 0 ] && mapfile -t versions < <(printf '%s\n' "${!UBUNTU[@]}" | sort -n)
 

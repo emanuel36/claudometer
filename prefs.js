@@ -14,8 +14,8 @@ import {
 } from './src/prefs/prefs-widgets.js';
 import {parseHiddenProjects} from './src/history/stats.js';
 import {parseIndex} from './src/history/transcripts.js';
+import {chooseSaveFile, confirm, openUri, switchRow, toast} from './src/prefs/toolkit.js';
 
-Gio._promisify(Gtk.FileDialog.prototype, 'save', 'save_finish');
 Gio._promisify(Gio.File.prototype, 'load_contents_async', 'load_contents_finish');
 Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async', 'replace_contents_finish');
 
@@ -30,9 +30,9 @@ function group(page, title, rows) {
     return g;
 }
 
-function switchRow(settings, key, title) {
-    const row = new Adw.SwitchRow({title});
-    settings.bind(key, row, 'active', Gio.SettingsBindFlags.DEFAULT);
+function settingRow(settings, key, title) {
+    const {row, toggle} = switchRow({title});
+    settings.bind(key, toggle, 'active', Gio.SettingsBindFlags.DEFAULT);
     return row;
 }
 
@@ -47,14 +47,14 @@ function buttonRow(title, label, onClick) {
 function tabsRow(settings) {
     const row = new Adw.ExpanderRow({title: 'Tabs'});
     const switches = TAB_NAMES.map(name => {
-        const tab = new Adw.SwitchRow({title: name});
+        const {row: tabRow, toggle: tab} = switchRow({title: name});
         tab.connect('notify::active', () => {
             const shown = settings.get_strv('tabs');
             const next = TAB_NAMES.filter(n => n === name ? tab.active : shown.includes(n));
             if (next.join() !== shown.join())
                 settings.set_strv('tabs', next);
         });
-        row.add_row(tab);
+        row.add_row(tabRow);
         return [name, tab];
     });
     followSettings(row, settings, ['tabs'], () => {
@@ -100,7 +100,7 @@ function keepRows(settings) {
     const amountRow = new Adw.PreferencesRow({
         child: box, activatable: false, title: 'Keep history for',
     });
-    const foreverRow = new Adw.SwitchRow({title: 'Keep forever'});
+    const {row: foreverRow, toggle: foreverToggle} = switchRow({title: 'Keep forever'});
 
     // Set while the controls are being filled in or written out, so neither feeds the other
     let busy = false;
@@ -108,7 +108,7 @@ function keepRows(settings) {
     let pending = 0;
     const show = ({forever, amount, unit}) => {
         busy = true;
-        foreverRow.active = forever;
+        foreverToggle.active = forever;
         spin.value = amount;
         toggles.forEach(([name, button]) => (button.active = name === unit));
         shownUnit = unit;
@@ -116,7 +116,7 @@ function keepRows(settings) {
         busy = false;
     };
     const writeDays = () => {
-        const days = keepDays(foreverRow.active, spin.get_value_as_int(), shownUnit);
+        const days = keepDays(foreverToggle.active, spin.get_value_as_int(), shownUnit);
         if (settings.get_int('keep-days') !== days) {
             busy = true;
             settings.set_int('keep-days', days);
@@ -134,7 +134,7 @@ function keepRows(settings) {
             return;
         busy = true;
         const amount = spin.get_value_as_int();
-        controls.sensitive = !foreverRow.active;
+        controls.sensitive = !foreverToggle.active;
         if (settings.get_int('keep-amount') !== amount)
             settings.set_int('keep-amount', amount);
         if (settings.get_string('keep-unit') !== shownUnit)
@@ -147,7 +147,7 @@ function keepRows(settings) {
             return GLib.SOURCE_REMOVE;
         });
     };
-    foreverRow.connect('notify::active', write);
+    foreverToggle.connect('notify::active', write);
     spin.connect('value-changed', write);
     // A new unit converts the number so the length stays about the same
     toggles.forEach(([unit, button]) => button.connect('toggled', () => {
@@ -205,7 +205,7 @@ export default class ClaudometerPreferences extends ExtensionPreferences {
             title: 'Top bar', icon_name: 'video-display-symbolic',
         });
         group(page, 'Look', [
-            switchRow(settings, 'show-icon', 'Show icon'),
+            settingRow(settings, 'show-icon', 'Show icon'),
             choiceRow({
                 title: 'Style', settings, key: 'panel-style',
                 choices: [['percentage', 'Percentage'], ['bar', 'Bar'], ['ring', 'Ring']],
@@ -250,7 +250,7 @@ export default class ClaudometerPreferences extends ExtensionPreferences {
         const page = new Adw.PreferencesPage({title: 'Popup', icon_name: 'view-grid-symbolic'});
         group(page, 'Tabs', [tabsRow(settings)]);
         group(page, 'Limits', [
-            switchRow(settings, 'model-limits', 'Per-model limits'),
+            settingRow(settings, 'model-limits', 'Per-model limits'),
             choiceRow({
                 title: 'Reset times', settings, key: 'reset-style',
                 choices: [['countdown', 'Countdown'], ['clock', 'Clock time']],
@@ -340,31 +340,19 @@ export default class ClaudometerPreferences extends ExtensionPreferences {
     }
 
     _rebuild(window, settings) {
-        const dialog = new Adw.AlertDialog({
+        confirm(window, {
             heading: 'Rebuild activity history?',
             body: 'Claudometer will read all Claude Code transcripts again. ' +
                 'This can take about a minute.',
-            default_response: 'cancel',
-            close_response: 'cancel',
-        });
-        dialog.add_response('cancel', 'Cancel');
-        dialog.add_response('rebuild', 'Rebuild');
-        dialog.set_response_appearance('rebuild', Adw.ResponseAppearance.SUGGESTED);
-        dialog.connect('response', (d, response) => {
-            if (response === 'rebuild')
-                settings.set_int('rebuild-request', settings.get_int('rebuild-request') + 1);
-        });
-        dialog.present(window);
+            cancelLabel: 'Cancel',
+            confirmLabel: 'Rebuild',
+        }, () => settings.set_int('rebuild-request', settings.get_int('rebuild-request') + 1));
     }
 
     async _export(window) {
-        const toast = title => window.add_toast(new Adw.Toast({title, use_markup: false}));
-        let target;
-        try {
-            target = await new Gtk.FileDialog({initial_name: EXPORT_FILE_NAME}).save(window, null);
-        } catch {
+        const target = await chooseSaveFile(window, EXPORT_FILE_NAME);
+        if (!target)
             return;  // Dismissed
-        }
         const summary = Gio.File.new_for_path(GLib.build_filenamev(
             [GLib.get_user_data_dir(), this.metadata.uuid, 'summary.json']));
         try {
@@ -373,7 +361,7 @@ export default class ClaudometerPreferences extends ExtensionPreferences {
                 [bytes] = await summary.load_contents_async(null);
             } catch (e) {
                 if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
-                    toast('No activity to export yet');
+                    toast(window, 'No activity to export yet');
                     return;
                 }
                 throw e;
@@ -382,9 +370,9 @@ export default class ClaudometerPreferences extends ExtensionPreferences {
             const csv = new TextEncoder().encode(exportCsv(records));
             await target.replace_contents_bytes_async(new GLib.Bytes(csv), null, false,
                 Gio.FileCreateFlags.REPLACE_DESTINATION, null);
-            toast('Activity exported');
+            toast(window, 'Activity exported');
         } catch (e) {
-            toast(`Could not export: ${e.message}`);
+            toast(window, `Could not export: ${e.message}`);
         }
     }
 
@@ -410,7 +398,7 @@ export default class ClaudometerPreferences extends ExtensionPreferences {
         const link = (title, uri) => {
             const row = new Adw.ActionRow({title, activatable: true});
             row.add_suffix(new Gtk.Image({icon_name: 'adw-external-link-symbolic'}));
-            row.connect('activated', () => new Gtk.UriLauncher({uri}).launch(window, null, null));
+            row.connect('activated', () => openUri(window, uri));
             return row;
         };
         group(page, null, [

@@ -9,6 +9,7 @@ import Adw from 'gi://Adw';
 import {SCALES, drawPanelGraphic, graphicSize, hexToRgb, panelMarkup, usageColor}
     from '../topbar/panel.js';
 import {limitTimeText} from '../limits/status.js';
+import {loadCss} from './toolkit.js';
 
 const PANEL_KEYS = ['panel-style', 'panel-limit', 'panel-color', 'color-scale', 'show-icon'];
 const SAMPLE = {'five-hour': [42], weekly: [18], both: [42, 18]};
@@ -33,7 +34,7 @@ function addCss() {
     if (cssAdded)
         return;
     const provider = new Gtk.CssProvider();
-    provider.load_from_string(CSS);
+    loadCss(provider, CSS);
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
         Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
     cssAdded = true;

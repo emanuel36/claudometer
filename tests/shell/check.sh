@@ -103,6 +103,9 @@ session() {
         echo "FAIL: no preferences window: $titles"
         fail=1
     fi
+    # The toolkit seam, on the toolkit this version ships
+    WAYLAND_DISPLAY=wayland-0 gjs -m /tests/toolkit-check.js \
+        "$HOME/.local/share/gnome-shell/extensions/$UUID" || fail=1
     kill %1
     wait
     return $fail
