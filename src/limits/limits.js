@@ -1,4 +1,4 @@
-// Pure helpers for the Limits tab, built from the usage endpoint's response. No shell imports,
+// Pure helpers for the limits table, built from the usage endpoint's response. No shell imports,
 // so they can be checked under plain gjs (see tests/limits.test.js).
 
 /**

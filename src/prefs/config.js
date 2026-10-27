@@ -53,3 +53,20 @@ export function keepFields(days) {
     const unit = ['years', 'months', 'weeks', 'days'].find(name => days % UNIT_DAYS[name] === 0);
     return {forever: false, amount: days / UNIT_DAYS[unit], unit};
 }
+
+export const SEEN_CHOICES = [[10, '10 min'], [30, '30 min'], [60, '60 min']];
+
+/**
+ * The popup tab to open from the saved `last-tab` value.
+ *
+ * Args:
+ *     saved: The stored tab name; `Limits` is the old name of `Status`.
+ *     names: The tab names that exist.
+ *
+ * Returns:
+ *     The saved tab when it exists, else `Status`.
+ */
+export function tabFromSetting(saved, names) {
+    const name = saved === 'Limits' ? 'Status' : saved;
+    return names.includes(name) ? name : 'Status';
+}

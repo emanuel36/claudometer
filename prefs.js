@@ -6,7 +6,7 @@ import Gtk from 'gi://Gtk';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import {
-    REFRESH_CHOICES, UNIT_DAYS, keepDays, keepFields, resolveClaudeDir,
+    REFRESH_CHOICES, SEEN_CHOICES, UNIT_DAYS, keepDays, keepFields, resolveClaudeDir,
 } from './src/prefs/config.js';
 import {EXPORT_FILE_NAME, exportCsv} from './src/history/export.js';
 import {
@@ -62,7 +62,7 @@ function tabsRow(settings) {
         for (const [name, tab] of switches)
             tab.active = shown.includes(name);
         const names = TAB_NAMES.filter(n => shown.includes(n));
-        row.subtitle = names.length ? names.join(', ') : 'Only Limits';
+        row.subtitle = names.length ? names.join(', ') : 'Only Status';
     });
     return row;
 }
@@ -249,7 +249,16 @@ export default class ClaudometerPreferences extends ExtensionPreferences {
     _popupPage(settings, entries) {
         const page = new Adw.PreferencesPage({title: 'Popup', icon_name: 'view-grid-symbolic'});
         group(page, 'Tabs', [tabsRow(settings)]);
-        group(page, 'Limits', [
+        const seen = choiceRow({
+            title: 'Keep seen results for', settings, key: 'seen-minutes', type: 'i',
+            choices: SEEN_CHOICES,
+        });
+        followSettings(seen, settings, ['show-sessions'], () => {
+            seen.visible = settings.get_boolean('show-sessions');
+        });
+        group(page, 'Status', [
+            switchRow(settings, 'show-sessions', 'Sessions in the Status tab'),
+            seen,
             switchRow(settings, 'model-limits', 'Per-model limits'),
             choiceRow({
                 title: 'Reset times', settings, key: 'reset-style',

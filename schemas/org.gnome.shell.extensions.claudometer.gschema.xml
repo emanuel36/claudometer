@@ -13,12 +13,13 @@
     </key>
     <key name="last-tab" type="s">
       <choices>
+        <choice value="Status"/>
         <choice value="Limits"/>
         <choice value="Activity"/>
         <choice value="Projects"/>
         <choice value="Models"/>
       </choices>
-      <default>'Limits'</default>
+      <default>'Status'</default>
       <summary>The popup tab used last</summary>
     </key>
     <key name="panel-style" type="s">
@@ -68,7 +69,16 @@
     </key>
     <key name="tabs" type="as">
       <default>['Projects', 'Activity', 'Models']</default>
-      <summary>The popup tabs shown after Limits</summary>
+      <summary>The popup tabs shown after Status</summary>
+    </key>
+    <key name="show-sessions" type="b">
+      <default>true</default>
+      <summary>Show the Claude Code sessions in the Status tab</summary>
+    </key>
+    <key name="seen-minutes" type="i">
+      <range min="10" max="60"/>
+      <default>30</default>
+      <summary>Minutes a seen finished session stays listed</summary>
     </key>
     <key name="model-limits" type="b">
       <default>false</default>

@@ -184,7 +184,7 @@ export const SCREEN_STATES = {
  *     hasData: Whether there are limit values to show.
  *
  * Returns:
- *     `{icon, title, line}` for the block that replaces the Limits tab, or null when there
+ *     `{icon, title, line}` for the block that replaces the limits table, or null when there
  *     are values to show.
  */
 export function limitsScreen(state, detail, hasData) {

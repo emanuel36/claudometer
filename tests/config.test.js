@@ -2,7 +2,8 @@
 import System from 'system';
 
 import {
-    REFRESH_CHOICES, indexGapSeconds, keepDays, keepFields, resolveClaudeDir,
+    REFRESH_CHOICES, SEEN_CHOICES, indexGapSeconds, keepDays, keepFields, resolveClaudeDir,
+    tabFromSetting,
 } from '../src/prefs/config.js';
 
 let failures = 0;
@@ -36,6 +37,11 @@ check('fields forever', keepFields(0), {forever: true, amount: 6, unit: 'months'
 check('fields 45 days', keepFields(45), {forever: false, amount: 45, unit: 'days'});
 check('fields 365 days', keepFields(365), {forever: false, amount: 1, unit: 'years'});
 check('fields 14 days', keepFields(14), {forever: false, amount: 2, unit: 'weeks'});
+
+check('old Limits tab opens Status', tabFromSetting('Limits', ['Status', 'Models']), 'Status');
+check('saved tab kept', tabFromSetting('Models', ['Status', 'Models']), 'Models');
+check('unknown tab opens Status', tabFromSetting('Nope', ['Status']), 'Status');
+check('seen choices', SEEN_CHOICES.map(([minutes]) => minutes), [10, 30, 60]);
 
 if (failures > 0) {
     print(`\n${failures} failed`);

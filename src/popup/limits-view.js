@@ -1,4 +1,4 @@
-/** The Limits tab: a table with one row per limit. */
+/** The limits table of the Status tab: one row per limit. */
 import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 
@@ -22,8 +22,8 @@ function cell(text, styleClass, extra = {}) {
 }
 
 /**
- * The Limits tab: the 5-hour and weekly limits, and any weekly limit for a single model, as a
- * table of name, meter, percent used and time left (or reset clock time).
+ * The limits table of the Status tab: the 5-hour and weekly limits, and any weekly limit for a
+ * single model, as rows of name, meter, percent used and time left (or reset clock time).
  *
  * Returns:
  *     `{actor, update(data, stale), updateTimes(data, nowMs, stale), showState(screen),

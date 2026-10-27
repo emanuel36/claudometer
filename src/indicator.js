@@ -7,7 +7,7 @@ import St from 'gi://St';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import {indexGapSeconds, resolveClaudeDir} from './prefs/config.js';
+import {indexGapSeconds, resolveClaudeDir, tabFromSetting} from './prefs/config.js';
 import {runIndexer} from './history/index-runner.js';
 import {createLimitsView} from './popup/limits-view.js';
 import {panelMarkup, panelValues, usageColor} from './topbar/panel.js';
@@ -28,7 +28,7 @@ const ACTIVITY_KEYS = ['count', 'hidden-projects', 'project-names'];
 const OPEN_TICK_SECONDS = 60;
 
 /**
- * The top bar button: the chosen limits as a percentage, bar or ring, and a popup with the Limits,
+ * The top bar button: the chosen limits as a percentage, bar or ring, and a popup with the Status,
  * Projects, Activity and Models tabs.
  */
 export const Indicator = GObject.registerClass(
@@ -160,13 +160,13 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._projectsView = createProjectsView();
         this._modelsView = createModelsView();
         this._tabViews = {
-            Limits: this._limitsView.actor,
+            Status: this._limitsView.actor,
             Projects: this._projectsView.actor,
             Activity: this._activityView.actor,
             Models: this._modelsView.actor,
         };
-        const saved = this._settings.get_string('last-tab');
-        this._tab = saved in this._tabViews ? saved : 'Limits';
+        this._tab = tabFromSetting(this._settings.get_string('last-tab'),
+            Object.keys(this._tabViews));
         this._tabBar = createTabBar(
             Object.keys(this._tabViews).map(name => ({
                 name,
@@ -190,12 +190,12 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._applyTabs();
     }
 
-    // Limits is always shown; unknown names in the setting are ignored
+    // Status is always shown; unknown names in the setting are ignored
     _applyTabs() {
-        const shown = ['Limits', ...this._settings.get_strv('tabs')
-            .filter(name => name !== 'Limits' && name in this._tabViews)];
+        const shown = ['Status', ...this._settings.get_strv('tabs')
+            .filter(name => name !== 'Status' && name in this._tabViews)];
         this._tabBar.setShown(shown);
-        this._selectTab(shown.includes(this._tab) ? this._tab : 'Limits', false);
+        this._selectTab(shown.includes(this._tab) ? this._tab : 'Status', false);
     }
 
     _selectTab(name, remember = true) {
@@ -207,7 +207,7 @@ class ClaudometerIndicator extends PanelMenu.Button {
             return;
         this._settings.set_string('last-tab', name);
         this._refreshViews();
-        if (name !== 'Limits')
+        if (name !== 'Status')
             this._refreshIndex();
     }
 
@@ -225,7 +225,7 @@ class ClaudometerIndicator extends PanelMenu.Button {
         this._showStatus();
     }
 
-    // Without values the Limits tab shows why instead of the table
+    // Without values the Status tab shows why instead of the limits table
     _showLimitsState() {
         const {state, detail, data} = this._usage;
         this._limitsView.showState(limitsScreen(state, detail, !!data));

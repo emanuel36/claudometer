@@ -54,7 +54,7 @@ session() {
     echo "after start: $(state)"
 
     local button="Main.panel.statusArea['$UUID']" result fail=0
-    for tab in Limits Projects Activity Models; do
+    for tab in Status Projects Activity Models; do
         result=$(eval_js "$button.menu.open(); $button._selectTab('$tab'); true")
         echo "open $tab: $result"
         [ "$result" = "(true, 'true')" ] || fail=1
